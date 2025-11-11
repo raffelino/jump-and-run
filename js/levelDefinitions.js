@@ -169,6 +169,12 @@ export const levelDefinitions = {
                         if (row === 17 && col % 15 === 3) return 6; // Kristall (dekorativ)
                         if (row === 21 && col >= 40 && col <= 45) return 7; // Lava-Grube
                         if (row === 21 && col >= 70 && col <= 75) return 7; // Lava-Grube
+                        // Münzen
+                        if (row === 12 && col % 20 === 7) return 12;
+                        if (row === 16 && col % 15 === 3) return 12;
+                        if (row === 10 && col % 25 === 12) return 12;
+                        if (row === 14 && col % 18 === 9) return 12;
+                        if (row === 8 && col % 30 === 15) return 12;
                         return 0;
                     })
                 )
@@ -184,6 +190,12 @@ export const levelDefinitions = {
                         if (row === 14 && col % 18 === 5) return 6; // Kristall
                         if (row === 16 && col % 22 === 10) return 9; // Metall
                         if (row === 10 && col % 30 === 15) return 4; // Plattform
+                        // Münzen
+                        if (row === 13 && col % 18 === 5) return 12;
+                        if (row === 15 && col % 22 === 10) return 12;
+                        if (row === 9 && col % 30 === 15) return 12;
+                        if (row === 11 && col % 12 >= 3 && col % 12 <= 5) return 12;
+                        if (row === 17 && col % 16 === 8) return 12;
                         return 0;
                     })
                 )
@@ -199,6 +211,12 @@ export const levelDefinitions = {
                         if (row === 15 && col % 16 === 6) return 6; // Kristall
                         if (row === 21 && col >= 25 && col <= 28) return 7; // Lava
                         if (row === 21 && col >= 55 && col <= 60) return 7; // Lava
+                        // Münzen
+                        if (row === 14 && col % 16 === 6) return 12;
+                        if (row === 12 && col % 20 === 10) return 12;
+                        if (row === 9 && col % 25 === 13) return 12;
+                        if (row === 16 && col % 14 >= 4 && col % 14 <= 6) return 12;
+                        if (row === 10 && col % 18 === 9) return 12;
                         return 0;
                     })
                 )
@@ -214,6 +232,12 @@ export const levelDefinitions = {
                         if (row === 13 && col % 19 === 7) return 9; // Metall
                         if (row === 18 && col % 14 === 4) return 6; // Kristall
                         if (row === 11 && col % 25 === 10) return 4; // Plattform
+                        // Münzen
+                        if (row === 12 && col % 19 === 7) return 12;
+                        if (row === 17 && col % 14 === 4) return 12;
+                        if (row === 10 && col % 25 === 10) return 12;
+                        if (row === 14 && col % 11 >= 3 && col % 11 <= 5) return 12;
+                        if (row === 8 && col % 22 === 11) return 12;
                         return 0;
                     })
                 )
@@ -230,6 +254,13 @@ export const levelDefinitions = {
                         if (row === 17 && col % 21 === 9) return 9; // Metall
                         if (row === 21 && col >= 35 && col <= 42) return 7; // Lava
                         if (row === 21 && col >= 65 && col <= 70) return 7; // Lava
+                        // Münzen
+                        if (row === 13 && col % 17 === 6) return 12;
+                        if (row === 16 && col % 21 === 9) return 12;
+                        if (row === 11 && col % 23 === 12) return 12;
+                        if (row === 15 && col % 13 >= 4 && col % 13 <= 6) return 12;
+                        if (row === 9 && col % 27 === 14) return 12;
+                        if (row === 18 && col % 15 === 7) return 12;
                         return 0;
                     })
                 )
