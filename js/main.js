@@ -61,16 +61,34 @@ class Game {
     }
 
     loadWorlds() {
-        // Lade Welt 1
+        // Lade Welt 1 - Grasland
         this.worldManager.addWorld(
             levelDefinitions.world1.name,
             levelDefinitions.world1.levels
         );
         
-        // Lade Welt 2
+        // Lade Welt 2 - Dunkle Höhlen
         this.worldManager.addWorld(
             levelDefinitions.world2.name,
             levelDefinitions.world2.levels
+        );
+        
+        // Lade Welt 3 - Brennende Wüste
+        this.worldManager.addWorld(
+            levelDefinitions.world3.name,
+            levelDefinitions.world3.levels
+        );
+        
+        // Lade Welt 4 - Eisige Berge
+        this.worldManager.addWorld(
+            levelDefinitions.world4.name,
+            levelDefinitions.world4.levels
+        );
+        
+        // Lade Welt 5 - Himmelsburg
+        this.worldManager.addWorld(
+            levelDefinitions.world5.name,
+            levelDefinitions.world5.levels
         );
     }
 
@@ -323,8 +341,8 @@ class Game {
     update(deltaTime) {
         if (this.gameState !== 'playing') return;
         
-        // Update Level
-        this.currentLevel.update();
+        // Update Level (mit Player für ShootingEnemy)
+        this.currentLevel.update(this.player);
         
         // Update Spieler mit deltaTime für frameRate-unabhängige Animation
         this.player.update(this.inputHandler, this.currentLevel, deltaTime);
@@ -344,13 +362,20 @@ class Game {
             this.updateHUD();
         }
         
+        // Gegner-Kollision
+        if (this.currentLevel.checkEnemyCollisions(this.player)) {
+            if (this.player.isAlive && !this.player.isDying) {
+                this.player.die();
+            }
+        }
+        
         // Ziel erreicht
         if (this.currentLevel.checkGoalReached(this.player) && !this.levelComplete) {
             this.levelComplete = true;
             this.completeLevel();
         }
         
-        // Spieler gestorben
+        // Spieler gestorben (ohne Animation)
         if (!this.player.isAlive && this.gameState === 'playing') {
             this.gameState = 'dying'; // Verhindere mehrfaches Aufrufen
             this.playerDied();

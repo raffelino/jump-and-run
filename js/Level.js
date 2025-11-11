@@ -1,4 +1,5 @@
 import { Coin } from './Coin.js';
+import { WalkingEnemy, FlyingEnemy, ShootingEnemy } from './Enemy.js';
 
 /**
  * Level Klasse - Tile-basiertes Level-System
@@ -10,13 +11,43 @@ export class Level {
         this.tileSize = 32;
         this.width = levelData.width;
         this.height = levelData.height;
-        this.tiles = levelData.tiles;
+        
+        // Tile-Mapping: Zeichen -> Tile-ID (MUSS VOR parseTiles definiert werden!)
+        this.charToTile = {
+            '.': 0,  // air
+            'G': 1,  // ground
+            'B': 2,  // brick
+            'P': 3,  // pipe
+            'p': 4,  // platform (nur von oben begehbar)
+            'S': 5,  // stone
+            'C': 6,  // crystal
+            'L': 7,  // lava (tödlich)
+            'c': 8,  // cloud (platform)
+            'M': 9,  // metal
+            'I': 10, // ice (rutschig)
+            'W': 11, // wood
+            'o': 12  // coin
+        };
+        
+        // Konvertiere String-Tiles zu Nummern (falls nötig)
+        const parsedTiles = this.parseTiles(levelData.tiles);
+        
+        // Speichere Original-Tiles für Reset
+        this.originalTiles = parsedTiles.map(row => [...row]);
+        this.tiles = parsedTiles.map(row => [...row]);
+        
         this.spawnPoint = levelData.spawnPoint || { x: 64, y: 300 };
         this.goal = levelData.goal || { x: this.width * this.tileSize - 100, y: 200, width: 64, height: 64 };
         
         // Münzen aus Tiles generieren
         this.coins = [];
         this.generateCoinsFromTiles();
+        
+        // Gegner erstellen
+        this.enemies = [];
+        if (levelData.enemies) {
+            this.createEnemies(levelData.enemies);
+        }
 
         // Tile-Typen
         this.tileTypes = {
@@ -37,6 +68,53 @@ export class Level {
         
         this.lavaAnimationFrame = 0;
         this.lavaAnimationTimer = 0;
+        
+        // Portal-Animation
+        this.portalRotation = 0;
+        this.portalPulse = 0;
+        this.portalParticles = [];
+        this.initPortalParticles();
+    }
+    
+    /**
+     * Initialisiere Portal-Partikel für Animation
+     */
+    initPortalParticles() {
+        for (let i = 0; i < 20; i++) {
+            this.portalParticles.push({
+                angle: Math.random() * Math.PI * 2,
+                radius: Math.random() * 30,
+                speed: 0.02 + Math.random() * 0.03,
+                size: 2 + Math.random() * 3,
+                alpha: 0.3 + Math.random() * 0.7
+            });
+        }
+    }
+
+    /**
+     * Parse Tiles - konvertiert String-Format zu Nummern-Arrays
+     * Unterstützt beide Formate: String-basiert ["..GGG", "..GGG"] und Nummern-basiert [[0,0,1,1,1], [0,0,1,1,1]]
+     */
+    parseTiles(tiles) {
+        if (!tiles || tiles.length === 0) return [];
+        
+        // Prüfe ob erstes Element ein String ist
+        if (typeof tiles[0] === 'string') {
+            // String-Format: Konvertiere zu Nummern
+            return tiles.map(row => {
+                return row.split('').map(char => {
+                    // Prüfe ob Zeichen in charToTile gemappt ist
+                    if (char in this.charToTile) {
+                        return this.charToTile[char];
+                    }
+                    // Fallback: Luft
+                    return 0;
+                });
+            });
+        } else {
+            // Nummern-Format: Direkt verwenden
+            return tiles;
+        }
     }
 
     getTile(col, row) {
@@ -63,7 +141,30 @@ export class Level {
         }
     }
 
-    update() {
+    /**
+     * Erstelle Gegner basierend auf levelData
+     */
+    createEnemies(enemyData) {
+        enemyData.forEach(data => {
+            let enemy;
+            switch (data.type) {
+                case 'walking':
+                    enemy = new WalkingEnemy(data.x, data.y);
+                    break;
+                case 'flying':
+                    enemy = new FlyingEnemy(data.x, data.y);
+                    break;
+                case 'shooting':
+                    enemy = new ShootingEnemy(data.x, data.y);
+                    break;
+            }
+            if (enemy) {
+                this.enemies.push(enemy);
+            }
+        });
+    }
+
+    update(player) {
         this.coins.forEach(coin => coin.update());
         
         // Lava Animation
@@ -72,6 +173,24 @@ export class Level {
             this.lavaAnimationTimer = 0;
             this.lavaAnimationFrame = (this.lavaAnimationFrame + 1) % 3;
         }
+        
+        // Portal Animation
+        this.portalRotation += 0.03;
+        this.portalPulse += 0.05;
+        
+        // Portal-Partikel bewegen
+        this.portalParticles.forEach(particle => {
+            particle.angle += particle.speed;
+        });
+        
+        // Update Gegner
+        this.enemies.forEach(enemy => {
+            if (enemy instanceof ShootingEnemy) {
+                enemy.update(this, player);
+            } else {
+                enemy.update(this);
+            }
+        });
     }
 
     draw(ctx, camera) {
@@ -106,20 +225,72 @@ export class Level {
             }
         }
 
-        // Zeichne Ziel (Flagge)
-        ctx.fillStyle = '#00FF00';
-        ctx.fillRect(
-            this.goal.x - camera.x,
-            this.goal.y - camera.y,
-            this.goal.width,
-            this.goal.height
-        );
-        ctx.fillStyle = '#FFFF00';
-        ctx.font = 'bold 20px Arial';
-        ctx.fillText('ZIEL', this.goal.x - camera.x + 10, this.goal.y - camera.y + 35);
+        // Zeichne Portal (Levelziel)
+        this.drawPortal(ctx, camera);
 
         // Zeichne Münzen
         this.coins.forEach(coin => coin.draw(ctx, camera));
+        
+        // Zeichne Gegner
+        this.enemies.forEach(enemy => enemy.draw(ctx, camera));
+    }
+
+    /**
+     * Zeichne animiertes Portal
+     */
+    drawPortal(ctx, camera) {
+        const centerX = this.goal.x + this.goal.width / 2 - camera.x;
+        const centerY = this.goal.y + this.goal.height / 2 - camera.y;
+        
+        // Portal-Partikel zeichnen
+        this.portalParticles.forEach(particle => {
+            const x = centerX + Math.cos(particle.angle + this.portalRotation) * particle.radius;
+            const y = centerY + Math.sin(particle.angle + this.portalRotation) * particle.radius;
+            
+            ctx.save();
+            ctx.globalAlpha = particle.alpha * (0.5 + Math.sin(this.portalPulse) * 0.5);
+            ctx.fillStyle = '#00FFFF';
+            ctx.beginPath();
+            ctx.arc(x, y, particle.size, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        });
+        
+        // Äußerer Ring
+        ctx.save();
+        ctx.globalAlpha = 0.6 + Math.sin(this.portalPulse) * 0.3;
+        ctx.strokeStyle = '#00FFFF';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, 28, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+        
+        // Mittlerer Ring (rotierend)
+        ctx.save();
+        ctx.translate(centerX, centerY);
+        ctx.rotate(this.portalRotation);
+        ctx.globalAlpha = 0.5;
+        ctx.strokeStyle = '#0088FF';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 20, 15, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+        
+        // Innerer Kern (pulsierend)
+        const pulseSize = 12 + Math.sin(this.portalPulse * 2) * 3;
+        ctx.save();
+        ctx.globalAlpha = 0.8;
+        const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, pulseSize);
+        gradient.addColorStop(0, '#FFFFFF');
+        gradient.addColorStop(0.5, '#00FFFF');
+        gradient.addColorStop(1, '#0044FF');
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, pulseSize, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
     }
 
     checkCoinCollisions(player) {
@@ -130,6 +301,29 @@ export class Level {
             }
         });
         return coinsCollected;
+    }
+
+    /**
+     * Prüfe Kollisionen mit Gegnern
+     */
+    checkEnemyCollisions(player) {
+        // Prüfe normale Gegner
+        for (let enemy of this.enemies) {
+            if (enemy.checkCollision(player)) {
+                return true;
+            }
+        }
+        
+        // Prüfe Feuerbälle von ShootingEnemies
+        for (let enemy of this.enemies) {
+            if (enemy instanceof ShootingEnemy) {
+                if (enemy.checkFireballCollisions(player)) {
+                    return true;
+                }
+            }
+        }
+        
+        return false;
     }
 
     checkGoalReached(player) {
@@ -143,7 +337,10 @@ export class Level {
     }
 
     reset() {
-        this.coins.forEach(coin => coin.reset());
+        // Tiles zurücksetzen und Münzen neu generieren
+        this.tiles = this.originalTiles.map(row => [...row]);
+        this.coins = [];
+        this.generateCoinsFromTiles();
     }
 }
 

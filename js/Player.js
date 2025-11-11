@@ -24,9 +24,17 @@ export class Player {
         this.isOnGround = false;
         this.facingRight = true;
         this.isAlive = true;
+        this.isDying = false;
+        
+        // Death Animation
+        this.deathAnimationTimer = 0;
+        this.deathAnimationDuration = 1000; // 1 Sekunde
+        this.deathRotation = 0;
+        this.deathOpacity = 1;
+        this.deathScale = 1;
         
         // Animation
-        this.animationState = 'idle'; // 'idle', 'run', 'jump'
+        this.animationState = 'idle'; // 'idle', 'run', 'jump', 'death'
         this.animationFrame = 0;
         this.animationTimer = 0; // Zeit-Akkumulator für Animationen
         this.animationFrameDuration = 100; // Millisekunden pro Frame für Run
@@ -34,6 +42,12 @@ export class Player {
     }
 
     update(inputHandler, level, deltaTime = 16) {
+        // Wenn Spieler stirbt, nur Death-Animation
+        if (this.isDying) {
+            this.updateDeathAnimation(deltaTime);
+            return;
+        }
+        
         // Bewegung
         this.velocityX = 0;
         
@@ -167,7 +181,8 @@ export class Player {
                     return;
                 }
                 
-                if (tile && tile.solid) {
+                // Nur solide Tiles mit horizontaler Kollision (platformOnly ignorieren!)
+                if (tile && tile.solid && !tile.platformOnly) {
                     // Horizontale Kollision
                     if (this.velocityX > 0) {
                         // Nach rechts bewegt
@@ -335,9 +350,72 @@ export class Player {
         return null;
     }
 
+    updateDeathAnimation(deltaTime) {
+        this.deathAnimationTimer += deltaTime;
+        const progress = Math.min(this.deathAnimationTimer / this.deathAnimationDuration, 1);
+        
+        // 4 volle Drehungen
+        this.deathRotation = progress * Math.PI * 8;
+        
+        // Fade out
+        this.deathOpacity = 1 - progress;
+        
+        // Pulsierendes Scaling
+        this.deathScale = 1 + Math.sin(progress * Math.PI * 4) * 0.3;
+        
+        // Nach oben fliegen, dann fallen
+        if (progress < 0.5) {
+            this.y -= 3;
+        } else {
+            this.y += 5;
+        }
+        
+        // Am Ende: isAlive = false
+        if (progress >= 1) {
+            this.isAlive = false;
+        }
+    }
+
     draw(ctx, camera) {
         ctx.save();
         
+        // Death Animation
+        if (this.isDying) {
+            ctx.globalAlpha = this.deathOpacity;
+            
+            // Zentrum des Spielers
+            const centerX = this.x - camera.x + this.width / 2;
+            const centerY = this.y - camera.y + this.height / 2;
+            
+            // Totenkopf mit Rotation und Scaling
+            ctx.translate(centerX, centerY);
+            ctx.rotate(this.deathRotation);
+            ctx.scale(this.deathScale, this.deathScale);
+            
+            // Totenkopf Emoji
+            ctx.font = '48px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('💀', 0, 0);
+            
+            // Gelbe Partikel im Kreis
+            for (let i = 0; i < 8; i++) {
+                const angle = (i / 8) * Math.PI * 2 + this.deathRotation;
+                const distance = 40 * this.deathScale;
+                const px = Math.cos(angle) * distance;
+                const py = Math.sin(angle) * distance;
+                
+                ctx.fillStyle = 'yellow';
+                ctx.beginPath();
+                ctx.arc(px, py, 4, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            ctx.restore();
+            return;
+        }
+        
+        // Normale Animation
         // Hole aktuellen Animation Frame
         const sprites = this.assetManager.getSprite('player');
         const currentSprite = sprites[this.animationState][Math.floor(this.animationFrame)];
@@ -361,7 +439,10 @@ export class Player {
     }
 
     die() {
-        this.isAlive = false;
+        if (!this.isDying) {
+            this.isDying = true;
+            this.deathAnimationTimer = 0;
+        }
     }
 
     reset(x, y) {
@@ -370,6 +451,11 @@ export class Player {
         this.velocityX = 0;
         this.velocityY = 0;
         this.isAlive = true;
+        this.isDying = false;
+        this.deathAnimationTimer = 0;
+        this.deathRotation = 0;
+        this.deathOpacity = 1;
+        this.deathScale = 1;
         this.isOnGround = false;
         this.animationFrame = 0;
         this.animationTimer = 0;
