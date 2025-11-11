@@ -1,6 +1,6 @@
-# Jump & Run - Browser Spiel
+# Kathis Adventure - Browser Spiel
 
-Ein Mario-ähnliches Jump & Run Spiel im Browser mit modularem Level-Framework.
+Ein Jump & Run Spiel im Browser mit modularem Level-Framework.
 
 ## Features
 

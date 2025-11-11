@@ -6,7 +6,7 @@ import { Logger } from './Logger.js';
 export class SaveGameManager {
     constructor() {
         this.logger = new Logger('SaveGameManager');
-        this.encryptionKey = 'JumpAndRun2025Secret'; // Einfacher Schlüssel für XOR
+        this.encryptionKey = 'KathisAdventure2025'; // Einfacher Schlüssel für XOR
         this.currentSave = null;
     }
 
@@ -110,7 +110,7 @@ export class SaveGameManager {
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `jumpandrun_save_${Date.now()}.sav`;
+            a.download = `kathis_adventure_save_${Date.now()}.sav`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);

@@ -15,6 +15,11 @@ export class InputHandler {
 
     setupEventListeners() {
         window.addEventListener('keydown', (e) => {
+            // Bei Command/Meta-Taste: Setze alle Bewegungstasten zurück
+            if (e.metaKey || e.key === 'Meta') {
+                this.resetMovementKeys();
+            }
+            
             this.keys[e.key] = true;
             
             // Logging
@@ -45,7 +50,41 @@ export class InputHandler {
 
         window.addEventListener('keyup', (e) => {
             this.keys[e.key] = false;
+            
+            // Bei Command/Meta-Taste: Setze alle Bewegungstasten zurück
+            if (e.key === 'Meta') {
+                this.resetMovementKeys();
+            }
         });
+        
+        // Setze alle Tasten zurück wenn Fenster den Fokus verliert
+        window.addEventListener('blur', () => {
+            this.resetAllKeys();
+        });
+        
+        // Setze alle Tasten zurück wenn Tab gewechselt wird
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                this.resetAllKeys();
+            }
+        });
+    }
+    
+    resetMovementKeys() {
+        // Setze alle Bewegungstasten zurück
+        this.keys['ArrowLeft'] = false;
+        this.keys['ArrowRight'] = false;
+        this.keys['ArrowUp'] = false;
+        this.keys['ArrowDown'] = false;
+        this.keys['a'] = false;
+        this.keys['d'] = false;
+        this.keys['w'] = false;
+        this.keys[' '] = false;
+    }
+    
+    resetAllKeys() {
+        // Setze alle Tasten zurück
+        this.keys = {};
     }
     
     setCheatCodeCallback(callback) {

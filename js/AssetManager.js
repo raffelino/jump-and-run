@@ -34,8 +34,8 @@ export class AssetManager {
         // Player Sprite - Animiert (Idle, Run, Jump)
         this.sprites.player = this.createPlayerSprites();
         
-        // Ground Tile
-        this.sprites.ground = this.createRectSprite(32, 32, this.colors.ground, '#654321');
+        // Ground Tile - mit Gras-Textur
+        this.sprites.ground = this.createGroundSprite(32, 32);
         
         // Brick Tile
         this.sprites.brick = this.createBrickSprite(32, 32);
@@ -215,6 +215,82 @@ export class AssetManager {
         ctx.moveTo(width/2, 0);
         ctx.lineTo(width/2, height);
         ctx.stroke();
+        
+        return canvas;
+    }
+
+    createGroundSprite(width, height) {
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        
+        // Gras-Oberseite (grün)
+        const grassHeight = 8;
+        const gradient = ctx.createLinearGradient(0, 0, 0, grassHeight);
+        gradient.addColorStop(0, '#7CFC00'); // Helles Grasgrün
+        gradient.addColorStop(1, '#228B22'); // Dunkleres Grün
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, width, grassHeight);
+        
+        // Grashalme (Detail)
+        ctx.strokeStyle = '#00FF00';
+        ctx.lineWidth = 1;
+        for (let i = 0; i < 10; i++) {
+            const x = (i * width / 10) + Math.random() * 2;
+            ctx.beginPath();
+            ctx.moveTo(x, grassHeight);
+            ctx.lineTo(x, grassHeight - 4);
+            ctx.stroke();
+        }
+        
+        // Erde (braun)
+        const dirtGradient = ctx.createLinearGradient(0, grassHeight, 0, height);
+        dirtGradient.addColorStop(0, '#8B4513'); // Sattlebraun
+        dirtGradient.addColorStop(0.5, '#654321'); // Dunkelbraun
+        dirtGradient.addColorStop(1, '#4A2F1A'); // Sehr dunkelbraun
+        ctx.fillStyle = dirtGradient;
+        ctx.fillRect(0, grassHeight, width, height - grassHeight);
+        
+        // Erd-Textur (kleine Steine und Klumpen)
+        ctx.fillStyle = '#5D3A1A';
+        for (let i = 0; i < 12; i++) {
+            const x = Math.random() * width;
+            const y = grassHeight + Math.random() * (height - grassHeight);
+            const size = Math.random() * 3 + 1;
+            ctx.fillRect(x, y, size, size);
+        }
+        
+        // Hellere Erd-Partikel
+        ctx.fillStyle = '#A0522D';
+        for (let i = 0; i < 8; i++) {
+            const x = Math.random() * width;
+            const y = grassHeight + Math.random() * (height - grassHeight);
+            const size = Math.random() * 2 + 1;
+            ctx.fillRect(x, y, size, size);
+        }
+        
+        // Wurzeln (optional, für Detail)
+        ctx.strokeStyle = '#654321';
+        ctx.lineWidth = 1;
+        for (let i = 0; i < 3; i++) {
+            const x = Math.random() * width;
+            const startY = grassHeight;
+            ctx.beginPath();
+            ctx.moveTo(x, startY);
+            ctx.quadraticCurveTo(
+                x + (Math.random() - 0.5) * 10,
+                startY + (height - grassHeight) / 2,
+                x + (Math.random() - 0.5) * 8,
+                height
+            );
+            ctx.stroke();
+        }
+        
+        // Rahmen
+        ctx.strokeStyle = '#4A2F1A';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(1, 1, width - 2, height - 2);
         
         return canvas;
     }

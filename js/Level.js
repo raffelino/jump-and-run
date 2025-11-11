@@ -69,26 +69,78 @@ export class Level {
         this.lavaAnimationFrame = 0;
         this.lavaAnimationTimer = 0;
         
-        // Portal-Animation
-        this.portalRotation = 0;
-        this.portalPulse = 0;
-        this.portalParticles = [];
-        this.initPortalParticles();
+        // Café-Animation (wehende Fahne)
+        this.flagWave = 0;
+        this.flagSpeed = 0.08;
+        
+        // Hintergrundelemente (dekorativ, kein Gameplay-Einfluss)
+        this.backgroundElements = this.generateBackgroundElements();
     }
-    
+
     /**
-     * Initialisiere Portal-Partikel für Animation
+     * Generiere dekorative Hintergrundelemente (Bäume, Wolken)
      */
-    initPortalParticles() {
-        for (let i = 0; i < 20; i++) {
-            this.portalParticles.push({
-                angle: Math.random() * Math.PI * 2,
-                radius: Math.random() * 30,
-                speed: 0.02 + Math.random() * 0.03,
-                size: 2 + Math.random() * 3,
-                alpha: 0.3 + Math.random() * 0.7
+    generateBackgroundElements() {
+        const elements = {
+            trees: [],
+            clouds: []
+        };
+        
+        const levelWidth = this.width * this.tileSize;
+        const levelHeight = this.height * this.tileSize;
+        
+        // Generiere Bäume (am Boden)
+        const treeCount = Math.floor(this.width / 10); // Alle ~10 Tiles ein Baum
+        for (let i = 0; i < treeCount; i++) {
+            const x = Math.random() * levelWidth;
+            const groundY = this.findGroundAt(x);
+            
+            if (groundY !== null) {
+                elements.trees.push({
+                    x: x,
+                    y: groundY,
+                    height: 80 + Math.random() * 40, // 80-120px hoch
+                    trunkWidth: 12 + Math.random() * 8, // 12-20px breit
+                    crownRadius: 30 + Math.random() * 20, // 30-50px Radius
+                    crownColor: Math.random() > 0.5 ? '#228B22' : '#2E8B57', // Verschiedene Grüntöne
+                    swayOffset: Math.random() * Math.PI * 2 // Für Animation
+                });
+            }
+        }
+        
+        // Generiere Wolken (am Himmel)
+        const cloudCount = Math.floor(this.width / 8);
+        for (let i = 0; i < cloudCount; i++) {
+            elements.clouds.push({
+                x: Math.random() * levelWidth,
+                y: Math.random() * (levelHeight * 0.3), // Obere 30% des Levels
+                width: 60 + Math.random() * 40, // 60-100px breit
+                height: 30 + Math.random() * 20, // 30-50px hoch
+                speed: 0.1 + Math.random() * 0.3, // Langsame Bewegung
+                opacity: 0.6 + Math.random() * 0.3
             });
         }
+        
+        return elements;
+    }
+
+    /**
+     * Finde den Boden (erstes solides Tile) an einer X-Position
+     * Nur im Ground-Level (letzte 5 Zeilen), nicht auf Plattformen
+     */
+    findGroundAt(x) {
+        const col = Math.floor(x / this.tileSize);
+        const groundLevel = this.height - 5; // Ground-Level beginnt hier
+        
+        // Suche nur im Ground-Level Bereich (letzte 5 Zeilen)
+        for (let row = groundLevel; row < this.tiles.length; row++) {
+            const tile = this.getTile(col, row);
+            if (tile && tile.solid) {
+                return row * this.tileSize;
+            }
+        }
+        
+        return null;
     }
 
     /**
@@ -174,13 +226,17 @@ export class Level {
             this.lavaAnimationFrame = (this.lavaAnimationFrame + 1) % 3;
         }
         
-        // Portal Animation
-        this.portalRotation += 0.03;
-        this.portalPulse += 0.05;
+        // Café Fahnen-Animation
+        this.flagWave += this.flagSpeed;
         
-        // Portal-Partikel bewegen
-        this.portalParticles.forEach(particle => {
-            particle.angle += particle.speed;
+        // Update Wolken (Bewegung)
+        const levelWidth = this.width * this.tileSize;
+        this.backgroundElements.clouds.forEach(cloud => {
+            cloud.x += cloud.speed;
+            // Wrap around wenn Wolke rechts raus ist
+            if (cloud.x > levelWidth + cloud.width) {
+                cloud.x = -cloud.width;
+            }
         });
         
         // Update Gegner
@@ -198,6 +254,9 @@ export class Level {
         const endCol = Math.ceil((camera.x + camera.width) / this.tileSize);
         const startRow = Math.floor(camera.y / this.tileSize);
         const endRow = Math.ceil((camera.y + camera.height) / this.tileSize);
+
+        // Zeichne Hintergrundelemente ZUERST (hinter allem)
+        this.drawBackgroundElements(ctx, camera);
 
         // Zeichne Tiles
         for (let row = startRow; row <= endRow; row++) {
@@ -225,8 +284,8 @@ export class Level {
             }
         }
 
-        // Zeichne Portal (Levelziel)
-        this.drawPortal(ctx, camera);
+        // Zeichne Café Fin (Levelziel)
+        this.drawCafe(ctx, camera);
 
         // Zeichne Münzen
         this.coins.forEach(coin => coin.draw(ctx, camera));
@@ -236,60 +295,248 @@ export class Level {
     }
 
     /**
-     * Zeichne animiertes Portal
+     * Zeichne dekorative Hintergrundelemente
      */
-    drawPortal(ctx, camera) {
-        const centerX = this.goal.x + this.goal.width / 2 - camera.x;
-        const centerY = this.goal.y + this.goal.height / 2 - camera.y;
-        
-        // Portal-Partikel zeichnen
-        this.portalParticles.forEach(particle => {
-            const x = centerX + Math.cos(particle.angle + this.portalRotation) * particle.radius;
-            const y = centerY + Math.sin(particle.angle + this.portalRotation) * particle.radius;
+    drawBackgroundElements(ctx, camera) {
+        // Wolken (im Himmel)
+        this.backgroundElements.clouds.forEach(cloud => {
+            const x = cloud.x - camera.x;
+            const y = cloud.y - camera.y;
             
-            ctx.save();
-            ctx.globalAlpha = particle.alpha * (0.5 + Math.sin(this.portalPulse) * 0.5);
-            ctx.fillStyle = '#00FFFF';
-            ctx.beginPath();
-            ctx.arc(x, y, particle.size, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.restore();
+            // Nur zeichnen wenn im sichtbaren Bereich
+            if (x + cloud.width > 0 && x < camera.width && y + cloud.height > 0 && y < camera.height) {
+                ctx.save();
+                ctx.globalAlpha = cloud.opacity;
+                ctx.fillStyle = '#FFFFFF';
+                
+                // Wolke aus mehreren Kreisen
+                ctx.beginPath();
+                ctx.arc(x + cloud.width * 0.25, y + cloud.height * 0.6, cloud.height * 0.4, 0, Math.PI * 2);
+                ctx.arc(x + cloud.width * 0.5, y + cloud.height * 0.4, cloud.height * 0.5, 0, Math.PI * 2);
+                ctx.arc(x + cloud.width * 0.75, y + cloud.height * 0.6, cloud.height * 0.4, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.restore();
+            }
         });
         
-        // Äußerer Ring
-        ctx.save();
-        ctx.globalAlpha = 0.6 + Math.sin(this.portalPulse) * 0.3;
-        ctx.strokeStyle = '#00FFFF';
-        ctx.lineWidth = 4;
-        ctx.beginPath();
-        ctx.arc(centerX, centerY, 28, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.restore();
+        // Bäume (am Boden)
+        this.backgroundElements.trees.forEach(tree => {
+            const x = tree.x - camera.x;
+            const y = tree.y - camera.y;
+            
+            // Nur zeichnen wenn im sichtbaren Bereich
+            if (x + tree.crownRadius > 0 && x - tree.crownRadius < camera.width) {
+                ctx.save();
+                
+                // Leichtes Schwanken im Wind
+                const sway = Math.sin(Date.now() * 0.001 + tree.swayOffset) * 2;
+                
+                // Baumstamm (braun)
+                ctx.fillStyle = '#8B4513';
+                ctx.fillRect(
+                    x - tree.trunkWidth / 2 + sway,
+                    y - tree.height,
+                    tree.trunkWidth,
+                    tree.height
+                );
+                
+                // Baumkrone (grün) - drei Kreise für buschige Form
+                ctx.fillStyle = tree.crownColor;
+                
+                // Unterer Kreis
+                ctx.beginPath();
+                ctx.arc(x + sway * 1.5, y - tree.height + tree.crownRadius * 0.7, tree.crownRadius * 0.8, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Mittlerer Kreis (größer)
+                ctx.beginPath();
+                ctx.arc(x + sway * 2, y - tree.height, tree.crownRadius, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Oberer Kreis
+                ctx.beginPath();
+                ctx.arc(x + sway * 1.5, y - tree.height - tree.crownRadius * 0.6, tree.crownRadius * 0.7, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Dunklere Schattierung für Tiefe
+                ctx.fillStyle = 'rgba(0, 100, 0, 0.3)';
+                ctx.beginPath();
+                ctx.arc(x + sway * 2 - tree.crownRadius * 0.3, y - tree.height + tree.crownRadius * 0.3, tree.crownRadius * 0.6, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.restore();
+            }
+        });
+    }
+
+    /**
+     * Zeichne Café Fin mit wehender Fahne
+     */
+    drawCafe(ctx, camera) {
+        const x = this.goal.x - camera.x;
+        const y = this.goal.y - camera.y;
+        const width = this.goal.width;
+        const height = this.goal.height;
         
-        // Mittlerer Ring (rotierend)
         ctx.save();
-        ctx.translate(centerX, centerY);
-        ctx.rotate(this.portalRotation);
-        ctx.globalAlpha = 0.5;
-        ctx.strokeStyle = '#0088FF';
+        
+        // Haus-Grundstruktur (größer für ein Café)
+        const houseWidth = width * 1.5;
+        const houseHeight = height * 1.3;
+        const houseX = x - (houseWidth - width) / 2;
+        const houseY = y + height - houseHeight;
+        
+        // Wände (beige)
+        ctx.fillStyle = '#F5DEB3';
+        ctx.fillRect(houseX, houseY + houseHeight * 0.3, houseWidth, houseHeight * 0.7);
+        ctx.strokeStyle = '#D2B48C';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(houseX, houseY + houseHeight * 0.3, houseWidth, houseHeight * 0.7);
+        
+        // Dach (rot/braun)
+        ctx.fillStyle = '#8B4513';
+        ctx.beginPath();
+        ctx.moveTo(houseX - 8, houseY + houseHeight * 0.3);
+        ctx.lineTo(houseX + houseWidth / 2, houseY);
+        ctx.lineTo(houseX + houseWidth + 8, houseY + houseHeight * 0.3);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = '#654321';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        
+        // Fenster (links)
+        ctx.fillStyle = '#87CEEB';
+        ctx.fillRect(houseX + 8, houseY + houseHeight * 0.4, houseWidth * 0.25, houseHeight * 0.25);
+        ctx.strokeStyle = '#654321';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(houseX + 8, houseY + houseHeight * 0.4, houseWidth * 0.25, houseHeight * 0.25);
+        // Fensterkreuz
+        ctx.beginPath();
+        ctx.moveTo(houseX + 8 + houseWidth * 0.125, houseY + houseHeight * 0.4);
+        ctx.lineTo(houseX + 8 + houseWidth * 0.125, houseY + houseHeight * 0.4 + houseHeight * 0.25);
+        ctx.moveTo(houseX + 8, houseY + houseHeight * 0.4 + houseHeight * 0.125);
+        ctx.lineTo(houseX + 8 + houseWidth * 0.25, houseY + houseHeight * 0.4 + houseHeight * 0.125);
+        ctx.stroke();
+        
+        // Fenster (rechts)
+        ctx.fillStyle = '#87CEEB';
+        ctx.fillRect(houseX + houseWidth - 8 - houseWidth * 0.25, houseY + houseHeight * 0.4, houseWidth * 0.25, houseHeight * 0.25);
+        ctx.strokeStyle = '#654321';
+        ctx.strokeRect(houseX + houseWidth - 8 - houseWidth * 0.25, houseY + houseHeight * 0.4, houseWidth * 0.25, houseHeight * 0.25);
+        // Fensterkreuz
+        ctx.beginPath();
+        ctx.moveTo(houseX + houseWidth - 8 - houseWidth * 0.125, houseY + houseHeight * 0.4);
+        ctx.lineTo(houseX + houseWidth - 8 - houseWidth * 0.125, houseY + houseHeight * 0.4 + houseHeight * 0.25);
+        ctx.moveTo(houseX + houseWidth - 8 - houseWidth * 0.25, houseY + houseHeight * 0.4 + houseHeight * 0.125);
+        ctx.lineTo(houseX + houseWidth - 8, houseY + houseHeight * 0.4 + houseHeight * 0.125);
+        ctx.stroke();
+        
+        // Tür (mittig)
+        const doorWidth = houseWidth * 0.3;
+        const doorHeight = houseHeight * 0.5;
+        const doorX = houseX + (houseWidth - doorWidth) / 2;
+        const doorY = houseY + houseHeight - doorHeight;
+        
+        ctx.fillStyle = '#654321';
+        ctx.fillRect(doorX, doorY, doorWidth, doorHeight);
+        ctx.strokeStyle = '#4B3621';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(doorX, doorY, doorWidth, doorHeight);
+        
+        // Türknauf
+        ctx.fillStyle = '#FFD700';
+        ctx.beginPath();
+        ctx.arc(doorX + doorWidth * 0.8, doorY + doorHeight * 0.5, 3, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Markise über der Tür (gestreift rot-weiß)
+        const awningHeight = 12;
+        const awningY = doorY - awningHeight;
+        const stripeWidth = doorWidth / 6;
+        for (let i = 0; i < 6; i++) {
+            ctx.fillStyle = i % 2 === 0 ? '#FF6B6B' : '#FFFFFF';
+            ctx.fillRect(doorX + i * stripeWidth, awningY, stripeWidth, awningHeight);
+        }
+        ctx.strokeStyle = '#CC0000';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(doorX, awningY, doorWidth, awningHeight);
+        
+        // Schild "CAFÉ FIN"
+        const signWidth = houseWidth * 0.8;
+        const signHeight = 20;
+        const signX = houseX + (houseWidth - signWidth) / 2;
+        const signY = houseY + houseHeight * 0.15;
+        
+        // Schild-Hintergrund (Holz)
+        ctx.fillStyle = '#8B4513';
+        ctx.fillRect(signX, signY, signWidth, signHeight);
+        ctx.strokeStyle = '#654321';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(signX, signY, signWidth, signHeight);
+        
+        // Text "CAFÉ FIN"
+        ctx.fillStyle = '#FFD700';
+        ctx.font = 'bold 14px serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('CAFÉ FIN', signX + signWidth / 2, signY + signHeight / 2);
+        
+        // Fahnenstange (links vom Haus, steht auf dem Boden)
+        const poleX = houseX - 15;
+        const poleBottom = houseY + houseHeight; // Boden des Hauses
+        const poleHeight = houseHeight * 0.9; // Fast die ganze Haushöhe
+        const poleY = poleBottom - poleHeight; // Start der Stange (oben)
+        
+        ctx.strokeStyle = '#654321';
         ctx.lineWidth = 3;
         ctx.beginPath();
-        ctx.ellipse(0, 0, 20, 15, 0, 0, Math.PI * 2);
+        ctx.moveTo(poleX, poleY);
+        ctx.lineTo(poleX, poleBottom);
         ctx.stroke();
-        ctx.restore();
         
-        // Innerer Kern (pulsierend)
-        const pulseSize = 12 + Math.sin(this.portalPulse * 2) * 3;
-        ctx.save();
-        ctx.globalAlpha = 0.8;
-        const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, pulseSize);
-        gradient.addColorStop(0, '#FFFFFF');
-        gradient.addColorStop(0.5, '#00FFFF');
-        gradient.addColorStop(1, '#0044FF');
-        ctx.fillStyle = gradient;
+        // Goldene Kugel oben auf der Stange
+        ctx.fillStyle = '#FFD700';
         ctx.beginPath();
-        ctx.arc(centerX, centerY, pulseSize, 0, Math.PI * 2);
+        ctx.arc(poleX, poleY, 4, 0, Math.PI * 2);
         ctx.fill();
+        
+        // Wehende Fahne (animiert)
+        const flagWidth = 30;
+        const flagHeight = 20;
+        ctx.fillStyle = '#FF69B4'; // Rosa Fahne
+        
+        ctx.beginPath();
+        ctx.moveTo(poleX, poleY + 5);
+        
+        // Wellenförmige Fahne
+        for (let i = 0; i <= flagWidth; i += 3) {
+            const wave = Math.sin(this.flagWave + i * 0.2) * 3;
+            const yPos = poleY + 5 + (i / flagWidth) * 0 + wave;
+            ctx.lineTo(poleX + i, yPos);
+        }
+        
+        for (let i = flagWidth; i >= 0; i -= 3) {
+            const wave = Math.sin(this.flagWave + i * 0.2) * 3;
+            const yPos = poleY + 5 + flagHeight + (i / flagWidth) * 0 + wave;
+            ctx.lineTo(poleX + i, yPos);
+        }
+        
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = '#FF1493';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        
+        // Kleine Verzierung auf der Fahne (Herz)
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = 'bold 12px serif';
+        ctx.textAlign = 'center';
+        const heartX = poleX + flagWidth / 2 + Math.sin(this.flagWave) * 2;
+        const heartY = poleY + 15 + Math.sin(this.flagWave + flagWidth * 0.1) * 3;
+        ctx.fillText('♥', heartX, heartY);
+        
         ctx.restore();
     }
 
@@ -305,12 +552,26 @@ export class Level {
 
     /**
      * Prüfe Kollisionen mit Gegnern
+     * Gibt ein Objekt zurück: { hit: boolean, enemyBounce: boolean }
      */
     checkEnemyCollisions(player) {
         // Prüfe normale Gegner
         for (let enemy of this.enemies) {
             if (enemy.checkCollision(player)) {
-                return true;
+                // Prüfe ob Spieler von oben auf WalkingEnemy springt
+                if (enemy instanceof WalkingEnemy && enemy.active && !enemy.isDying) {
+                    const playerBounds = player.getBounds();
+                    const playerBottom = playerBounds.y + playerBounds.height;
+                    const enemyTop = enemy.y;
+                    
+                    // Spieler springt von oben drauf (Spieler fällt nach unten und ist über dem Gegner)
+                    if (player.velocityY > 0 && playerBottom - player.velocityY <= enemyTop + 10) {
+                        enemy.die(); // Start Death Animation
+                        return { hit: false, enemyBounce: true }; // Kein Schaden, aber Sprung
+                    }
+                }
+                
+                return { hit: true, enemyBounce: false }; // Normale Kollision = Schaden
             }
         }
         
@@ -318,12 +579,12 @@ export class Level {
         for (let enemy of this.enemies) {
             if (enemy instanceof ShootingEnemy) {
                 if (enemy.checkFireballCollisions(player)) {
-                    return true;
+                    return { hit: true, enemyBounce: false };
                 }
             }
         }
         
-        return false;
+        return { hit: false, enemyBounce: false };
     }
 
     checkGoalReached(player) {

@@ -8,8 +8,8 @@ export class Player {
         this.logger = new Logger('Player');
         this.x = x;
         this.y = y;
-        this.width = 48;
-        this.height = 48;
+        this.width = 32;  // Breite der Figur (schmaler)
+        this.height = 85; // Höhe der Figur (von Kopf bis Schuhe: 40*scale + 2.5*scale bei scale=2)
         this.assetManager = assetManager;
         
         // Physik
@@ -39,6 +39,9 @@ export class Player {
         this.animationTimer = 0; // Zeit-Akkumulator für Animationen
         this.animationFrameDuration = 100; // Millisekunden pro Frame für Run
         this.idleAnimationFrameDuration = 1000; // Millisekunden pro Frame für Idle
+        
+        // Debug
+        this.showCollisionBox = false; // Schalter für Collision-Box Visualisierung
     }
 
     update(inputHandler, level, deltaTime = 16) {
@@ -415,27 +418,246 @@ export class Player {
             return;
         }
         
-        // Normale Animation
-        // Hole aktuellen Animation Frame
-        const sprites = this.assetManager.getSprite('player');
-        const currentSprite = sprites[this.animationState][Math.floor(this.animationFrame)];
+        // Normale Animation - Kleine blonde Frau
+        ctx.save();
         
-        // Spiegeln wenn nach links schaut
-        if (!this.facingRight) {
-            ctx.translate(this.x - camera.x + this.width, this.y - camera.y);
-            ctx.scale(-1, 1);
-            ctx.drawImage(currentSprite, 0, 0, this.width, this.height);
-        } else {
-            ctx.drawImage(
-                currentSprite,
-                this.x - camera.x,
-                this.y - camera.y,
-                this.width,
-                this.height
-            );
+        const screenX = this.x - camera.x;
+        const screenY = this.y - camera.y;
+        
+        // Skalierungsfaktor für größere Figur - immer 2 unabhängig von width
+        const scale = 2; // Fest auf 2 für 64px hohe Zeichnung
+        
+        // Offset um Figur in die Box zu zentrieren
+        // Figur ist 32px breit (16*scale), Box ist auch 32px breit
+        // Figur muss zentriert werden: (32 - 32) / 2 = 0
+        const offsetX = -16; // Verschiebe Figur nach links um sie zu zentrieren
+        const offsetY = 0; // Keine vertikale Verschiebung nötig
+        
+        // Animations-Werte
+        let bodyBounce = 0;
+        let armSwingL = 0;
+        let armSwingR = 0;
+        let legSwingL = 0;
+        let legSwingR = 0;
+        let hairSwing = 0;
+        
+        if (this.animationState === 'run') {
+            // Lauf-Animation mit smootherer Bewegung
+            // Nutze animationTimer (in ms) für kontinuierliche Animation
+            const t = (this.animationTimer / 1000) * 2; // 2 Zyklen pro Sekunde
+            bodyBounce = Math.abs(Math.sin(t * Math.PI * 2)) * 2 * scale;
+            armSwingL = Math.sin(t * Math.PI * 2) * 4 * scale;
+            armSwingR = Math.sin(t * Math.PI * 2 + Math.PI) * 4 * scale;
+            legSwingL = Math.sin(t * Math.PI * 2) * 3 * scale;
+            legSwingR = Math.sin(t * Math.PI * 2 + Math.PI) * 3 * scale;
+            hairSwing = Math.sin(t * Math.PI * 4) * 3 * scale;
+        } else if (this.animationState === 'idle') {
+            // Idle-Animation: Leichtes Atmen
+            const breathe = Math.sin(Date.now() * 0.002) * 1.5 * scale;
+            bodyBounce = breathe;
         }
         
+        // Körper Position (mit Bounce)
+        const bodyY = 20 * scale - bodyBounce;
+        
+        // Zeichne Zopf ZUERST (bevor Flip) - immer auf der rechten Seite (hinten)
+        ctx.fillStyle = '#FFD700';
+        if (!this.facingRight) {
+            // Nach links: Zopf rechts (ist hinten)
+            ctx.fillRect(screenX + offsetX + (22 * scale) + hairSwing, screenY + offsetY + (10 * scale) - bodyBounce, 3 * scale, 8 * scale);
+            ctx.beginPath();
+            ctx.arc(screenX + offsetX + (23.5 * scale) + hairSwing, screenY + offsetY + (18 * scale) - bodyBounce, 2.5 * scale, 0, Math.PI * 2);
+            ctx.fill();
+            // Haarband (rosa)
+            ctx.fillStyle = '#FF69B4';
+            ctx.fillRect(screenX + offsetX + (21.5 * scale) + hairSwing * 0.5, screenY + offsetY + (10 * scale) - bodyBounce, 4 * scale, 1.5 * scale);
+        } else {
+            // Nach rechts: Zopf links (ist hinten)  
+            ctx.fillRect(screenX + offsetX + (7 * scale) - hairSwing, screenY + offsetY + (10 * scale) - bodyBounce, 3 * scale, 8 * scale);
+            ctx.beginPath();
+            ctx.arc(screenX + offsetX + (8.5 * scale) - hairSwing, screenY + offsetY + (18 * scale) - bodyBounce, 2.5 * scale, 0, Math.PI * 2);
+            ctx.fill();
+            // Haarband (rosa)
+            ctx.fillStyle = '#FF69B4';
+            ctx.fillRect(screenX + offsetX + (6.5 * scale) - hairSwing * 0.5, screenY + offsetY + (10 * scale) - bodyBounce, 4 * scale, 1.5 * scale);
+        }
+        
+        // Jetzt Flip für Rest der Figur
+        if (!this.facingRight) {
+            ctx.translate(screenX + offsetX + this.width, screenY + offsetY);
+            ctx.scale(-1, 1);
+            ctx.translate(-this.width, 0); // Korrigiere die Position nach dem Flip
+        } else {
+            ctx.translate(screenX + offsetX, screenY + offsetY);
+        }
+        
+        // Körper (Kleid - rosa/pink)
+        ctx.fillStyle = '#FF69B4';
+        ctx.beginPath();
+        ctx.moveTo(16 * scale, bodyY);
+        ctx.lineTo(8 * scale, 32 * scale - bodyBounce);
+        ctx.lineTo(24 * scale, 32 * scale - bodyBounce);
+        ctx.closePath();
+        ctx.fill();
+        
+        // Kleid-Details (dunkleres Pink)
+        ctx.strokeStyle = '#FF1493';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(16 * scale, (22 * scale) - bodyBounce, 4 * scale, 0, Math.PI);
+        ctx.stroke();
+        
+        // Gürtel/Schleife
+        ctx.fillStyle = '#FF1493';
+        ctx.fillRect(13 * scale, (22 * scale) - bodyBounce, 6 * scale, 2 * scale);
+        
+        // Arme (Haut) - hinter dem Körper für linken Arm
+        ctx.fillStyle = '#FFDAB9';
+        
+        // Linker Arm (hinter Körper)
+        const leftArmY = (20 * scale) - bodyBounce + armSwingL;
+        ctx.fillRect(10 * scale, leftArmY, 3 * scale, 8 * scale);
+        // Hand
+        ctx.beginPath();
+        ctx.arc(11.5 * scale, leftArmY + 8 * scale, 2 * scale, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Rechter Arm (vor Körper)
+        const rightArmY = (20 * scale) - bodyBounce + armSwingR;
+        ctx.fillRect(19 * scale, rightArmY, 3 * scale, 8 * scale);
+        // Hand
+        ctx.beginPath();
+        ctx.arc(20.5 * scale, rightArmY + 8 * scale, 2 * scale, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Beine (Haut)
+        if (this.animationState === 'run') {
+            // Laufende Beine - deutliche Bewegung
+            // Nutze animationTimer für kontinuierliche Animation
+            const t = (this.animationTimer / 1000) * 2; // 2 Zyklen pro Sekunde
+            
+            // Linkes Bein
+            const leftLegX = 12 * scale + Math.sin(t * Math.PI * 2) * 2 * scale;
+            const leftLegLength = (8 * scale) + legSwingL;
+            ctx.fillRect(leftLegX, 32 * scale - bodyBounce, 3 * scale, leftLegLength);
+            
+            // Rechtes Bein
+            const rightLegX = 17 * scale + Math.sin(t * Math.PI * 2 + Math.PI) * 2 * scale;
+            const rightLegLength = (8 * scale) + legSwingR;
+            ctx.fillRect(rightLegX, 32 * scale - bodyBounce, 3 * scale, rightLegLength);
+        } else if (this.animationState === 'jump') {
+            // Beide Beine angewinkelt beim Springen
+            ctx.fillRect(12 * scale, 32 * scale, 3 * scale, 6 * scale);
+            ctx.fillRect(17 * scale, 32 * scale, 3 * scale, 6 * scale);
+        } else {
+            // Stehende Beine
+            ctx.fillRect(12 * scale, 32 * scale - bodyBounce, 3 * scale, 8 * scale);
+            ctx.fillRect(17 * scale, 32 * scale - bodyBounce, 3 * scale, 8 * scale);
+        }
+        
+        // Schuhe (rot)
+        ctx.fillStyle = '#DC143C';
+        if (this.animationState === 'run') {
+            // Schuhe bewegen sich mit den Beinen
+            const t = (this.animationTimer / 1000) * 2; // 2 Zyklen pro Sekunde
+            const leftLegX = 12 * scale + Math.sin(t * Math.PI * 2) * 2 * scale;
+            const rightLegX = 17 * scale + Math.sin(t * Math.PI * 2 + Math.PI) * 2 * scale;
+            ctx.fillRect(leftLegX - 1 * scale, (40 * scale) - bodyBounce + legSwingL, 5 * scale, 2.5 * scale);
+            ctx.fillRect(rightLegX - 1 * scale, (40 * scale) - bodyBounce + legSwingR, 5 * scale, 2.5 * scale);
+        } else if (this.animationState === 'jump') {
+            ctx.fillRect(11 * scale, 38 * scale, 5 * scale, 2.5 * scale);
+            ctx.fillRect(16 * scale, 38 * scale, 5 * scale, 2.5 * scale);
+        } else {
+            ctx.fillRect(11 * scale, (40 * scale) - bodyBounce, 5 * scale, 2.5 * scale);
+            ctx.fillRect(16 * scale, (40 * scale) - bodyBounce, 5 * scale, 2.5 * scale);
+        }
+        
+        // Kopf (Haut) - mit Bounce
+        ctx.fillStyle = '#FFDAB9';
+        ctx.beginPath();
+        ctx.arc(16 * scale, (10 * scale) - bodyBounce, 6 * scale, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Haare (blond)
+        ctx.fillStyle = '#FFD700';
+        ctx.beginPath();
+        ctx.arc(16 * scale, (8 * scale) - bodyBounce, 7 * scale, Math.PI, 0, false);
+        ctx.fill();
+        
+        // Pony
+        ctx.beginPath();
+        ctx.moveTo(10 * scale, (8 * scale) - bodyBounce);
+        ctx.lineTo(12 * scale, (11 * scale) - bodyBounce);
+        ctx.lineTo(14 * scale, (10 * scale) - bodyBounce);
+        ctx.lineTo(16 * scale, (11 * scale) - bodyBounce);
+        ctx.lineTo(18 * scale, (10 * scale) - bodyBounce);
+        ctx.lineTo(20 * scale, (11 * scale) - bodyBounce);
+        ctx.lineTo(22 * scale, (8 * scale) - bodyBounce);
+        ctx.fill();
+        
+        // Augen
+        ctx.fillStyle = '#000000';
+        const eyeY = (10 * scale) - bodyBounce;
+        ctx.beginPath();
+        ctx.arc(13 * scale, eyeY, 1.5 * scale, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(19 * scale, eyeY, 1.5 * scale, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Augen-Glanz (weiß)
+        ctx.fillStyle = '#FFFFFF';
+        ctx.beginPath();
+        ctx.arc(13.5 * scale, eyeY - 0.5 * scale, 0.7 * scale, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(19.5 * scale, eyeY - 0.5 * scale, 0.7 * scale, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Lächeln
+        ctx.strokeStyle = '#8B4513';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(16 * scale, (12 * scale) - bodyBounce, 3 * scale, 0.2 * Math.PI, 0.8 * Math.PI);
+        ctx.stroke();
+        
+        // Wangen (rosa)
+        ctx.fillStyle = 'rgba(255, 182, 193, 0.6)';
+        ctx.beginPath();
+        ctx.arc(11 * scale, (12 * scale) - bodyBounce, 2 * scale, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(21 * scale, (12 * scale) - bodyBounce, 2 * scale, 0, Math.PI * 2);
+        ctx.fill();
+        
         ctx.restore();
+        
+        // Debug: Collision Box zeichnen
+        if (this.showCollisionBox) {
+            ctx.save();
+            ctx.strokeStyle = 'rgba(255, 0, 0, 0.8)';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(screenX, screenY, this.width, this.height);
+            
+            // Kreuz in der Mitte
+            ctx.strokeStyle = 'rgba(0, 255, 0, 0.8)';
+            ctx.beginPath();
+            ctx.moveTo(screenX, screenY);
+            ctx.lineTo(screenX + this.width, screenY + this.height);
+            ctx.moveTo(screenX + this.width, screenY);
+            ctx.lineTo(screenX, screenY + this.height);
+            ctx.stroke();
+            
+            // Boden-Linie (wo die Füße sein sollten)
+            ctx.strokeStyle = 'rgba(0, 0, 255, 0.8)';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(screenX - 5, screenY + this.height);
+            ctx.lineTo(screenX + this.width + 5, screenY + this.height);
+            ctx.stroke();
+            
+            ctx.restore();
+        }
     }
 
     die() {

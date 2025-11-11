@@ -21,4 +21,5 @@
 import { generateWorldLevels } from '../ProceduralLevelGenerator.js';
 
 // Generiere 5 Level prozedural mit Seed 1000
-export const world1 = generateWorldLevels(1000, "Grasland", 5);
+// Level 3 hat eigenen Seed für besseres Layout
+export const world1 = generateWorldLevels(5500, "Grasland", 5);

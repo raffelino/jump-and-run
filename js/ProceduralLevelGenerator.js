@@ -257,7 +257,7 @@ export function generateWorldLevels(worldSeed, worldName, levelCount = 5) {
         levels.push({
             width: width,
             height: height,
-            spawnPoint: { x: 64, y: (height - 7) * 32 },
+            spawnPoint: { x: 64, y: (height - 7) * 32 - 53 }, // -53 für größere Spielfigur (85px)
             goal: { x: (width - 5) * 32, y: (height - 7) * 32, width: 64, height: 64 },
             tiles: tiles,
             enemies: enemies

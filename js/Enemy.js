@@ -49,9 +49,48 @@ export class WalkingEnemy extends Enemy {
         this.speed = 1.5;
         this.direction = 1; // 1 = rechts, -1 = links
         this.tileSize = 32;
+        
+        // Death Animation
+        this.isDying = false;
+        this.deathTimer = 0;
+        this.deathDuration = 500; // 0.5 Sekunden
+        this.deathRotation = 0;
+        this.deathOpacity = 1;
+        this.deathVelocityY = -5; // Springt beim Tod nach oben
+        this.deathY = y;
+    }
+
+    die() {
+        if (!this.isDying) {
+            this.isDying = true;
+            this.deathTimer = 0;
+            this.deathY = this.y;
+        }
     }
 
     update(level) {
+        if (this.isDying) {
+            // Death Animation
+            this.deathTimer += 16; // ca. 60fps
+            const progress = Math.min(this.deathTimer / this.deathDuration, 1);
+            
+            // Rotation (2 volle Drehungen)
+            this.deathRotation = progress * Math.PI * 4;
+            
+            // Fade out
+            this.deathOpacity = 1 - progress;
+            
+            // Nach oben fliegen dann fallen
+            this.deathVelocityY += 0.3; // Gravitation
+            this.deathY += this.deathVelocityY;
+            
+            // Komplett entfernen wenn Animation fertig
+            if (progress >= 1) {
+                this.active = false;
+            }
+            return;
+        }
+        
         if (!this.active) return;
 
         // Bewege den Gegner
@@ -105,38 +144,153 @@ export class WalkingEnemy extends Enemy {
     }
 
     draw(ctx, camera) {
-        if (!this.active) return;
+        const screenX = this.x - camera.x;
+        const screenY = (this.isDying ? this.deathY : this.y) - camera.y;
 
         ctx.save();
-        const screenX = this.x - camera.x;
-        const screenY = this.y - camera.y;
+        
+        // Death Animation
+        if (this.isDying) {
+            ctx.globalAlpha = this.deathOpacity;
+            
+            // Zentrum des Gegners
+            const centerX = screenX + this.width / 2;
+            const centerY = screenY + this.height / 2;
+            
+            ctx.translate(centerX, centerY);
+            ctx.rotate(this.deathRotation);
+            
+            // Zeichne rotierendes Monster
+            // Körper (dunkler rot/braun)
+            ctx.fillStyle = '#8B2828';
+            ctx.beginPath();
+            ctx.arc(0, 0, 14, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Hörner
+            ctx.fillStyle = '#5A1818';
+            ctx.beginPath();
+            ctx.moveTo(-10, -10);
+            ctx.lineTo(-8, -16);
+            ctx.lineTo(-6, -10);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(6, -10);
+            ctx.lineTo(8, -16);
+            ctx.lineTo(10, -10);
+            ctx.fill();
+            
+            // X-Augen (tot)
+            ctx.strokeStyle = '#FFFFFF';
+            ctx.lineWidth = 2;
+            // Linkes X
+            ctx.beginPath();
+            ctx.moveTo(-8, -4);
+            ctx.lineTo(-4, 0);
+            ctx.moveTo(-4, -4);
+            ctx.lineTo(-8, 0);
+            ctx.stroke();
+            // Rechtes X
+            ctx.beginPath();
+            ctx.moveTo(4, -4);
+            ctx.lineTo(8, 0);
+            ctx.moveTo(8, -4);
+            ctx.lineTo(4, 0);
+            ctx.stroke();
+            
+            ctx.restore();
+            return;
+        }
+        
+        if (!this.active) return;
 
-        // Zeichne Gegner als roten Würfel mit Augen
-        ctx.fillStyle = '#FF3333';
-        ctx.fillRect(screenX, screenY, this.width, this.height);
-
-        // Augen
+        // Normale Darstellung - Monster
+        // Körper (runder Blob)
+        ctx.fillStyle = '#E74C3C';
+        ctx.beginPath();
+        ctx.arc(screenX + 16, screenY + 16, 14, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Dunkler Rand um den Körper
+        ctx.strokeStyle = '#C0392B';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(screenX + 16, screenY + 16, 14, 0, Math.PI * 2);
+        ctx.stroke();
+        
+        // Hörner
+        ctx.fillStyle = '#8B2828';
+        ctx.beginPath();
+        ctx.moveTo(screenX + 6, screenY + 6);
+        ctx.lineTo(screenX + 8, screenY);
+        ctx.lineTo(screenX + 10, screenY + 6);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(screenX + 22, screenY + 6);
+        ctx.lineTo(screenX + 24, screenY);
+        ctx.lineTo(screenX + 26, screenY + 6);
+        ctx.fill();
+        
+        // Augen (große runde Augen)
         ctx.fillStyle = '#FFFFFF';
-        const eyeY = screenY + 10;
+        const eyeY = screenY + 12;
         if (this.direction > 0) {
             // Blick nach rechts
-            ctx.fillRect(screenX + 16, eyeY, 6, 6);
-            ctx.fillRect(screenX + 24, eyeY, 6, 6);
+            ctx.beginPath();
+            ctx.arc(screenX + 20, eyeY, 4, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(screenX + 28, eyeY, 4, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Pupillen nach rechts
+            ctx.fillStyle = '#000000';
+            ctx.beginPath();
+            ctx.arc(screenX + 22, eyeY, 2, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(screenX + 30, eyeY, 2, 0, Math.PI * 2);
+            ctx.fill();
         } else {
             // Blick nach links
-            ctx.fillRect(screenX + 2, eyeY, 6, 6);
-            ctx.fillRect(screenX + 10, eyeY, 6, 6);
+            ctx.beginPath();
+            ctx.arc(screenX + 4, eyeY, 4, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(screenX + 12, eyeY, 4, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Pupillen nach links
+            ctx.fillStyle = '#000000';
+            ctx.beginPath();
+            ctx.arc(screenX + 2, eyeY, 2, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(screenX + 10, eyeY, 2, 0, Math.PI * 2);
+            ctx.fill();
         }
-
-        // Pupillen
-        ctx.fillStyle = '#000000';
-        if (this.direction > 0) {
-            ctx.fillRect(screenX + 19, eyeY + 2, 3, 3);
-            ctx.fillRect(screenX + 27, eyeY + 2, 3, 3);
-        } else {
-            ctx.fillRect(screenX + 3, eyeY + 2, 3, 3);
-            ctx.fillRect(screenX + 11, eyeY + 2, 3, 3);
-        }
+        
+        // Mund (böses Grinsen)
+        ctx.strokeStyle = '#8B2828';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(screenX + 16, screenY + 18, 6, 0.2 * Math.PI, 0.8 * Math.PI);
+        ctx.stroke();
+        
+        // Zähne
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(screenX + 12, screenY + 22, 2, 3);
+        ctx.fillRect(screenX + 15, screenY + 22, 2, 3);
+        ctx.fillRect(screenX + 18, screenY + 22, 2, 3);
+        
+        // Kleine Füße
+        ctx.fillStyle = '#C0392B';
+        ctx.beginPath();
+        ctx.ellipse(screenX + 8, screenY + 30, 4, 2, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(screenX + 24, screenY + 30, 4, 2, 0, 0, Math.PI * 2);
+        ctx.fill();
 
         ctx.restore();
     }

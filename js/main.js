@@ -363,10 +363,15 @@ class Game {
         }
         
         // Gegner-Kollision
-        if (this.currentLevel.checkEnemyCollisions(this.player)) {
+        const enemyCollision = this.currentLevel.checkEnemyCollisions(this.player);
+        if (enemyCollision.hit) {
+            // Normale Kollision = Schaden
             if (this.player.isAlive && !this.player.isDying) {
                 this.player.die();
             }
+        } else if (enemyCollision.enemyBounce) {
+            // Spieler ist auf Gegner gesprungen = kleiner Sprung
+            this.player.velocityY = -8; // Leichter Sprung nach oben
         }
         
         // Ziel erreicht
