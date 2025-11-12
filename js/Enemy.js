@@ -369,7 +369,7 @@ export class FlyingEnemy extends Enemy {
  * Feuerball-Projektil
  */
 export class Fireball {
-    constructor(x, y, targetX, targetY, speed = 3) {
+    constructor(x, y, targetX, targetY, speed = 1.5) {
         this.x = x;
         this.y = y;
         this.width = 12;
@@ -460,7 +460,7 @@ export class ShootingEnemy extends Enemy {
     constructor(x, y) {
         super(x, y, 32, 32);
         this.shootCooldown = 0;
-        this.shootInterval = 120; // Schießt alle 2 Sekunden
+        this.shootInterval = 240; // Schießt alle 4 Sekunden (bei 60fps)
         this.fireballs = [];
         this.detectionRange = 400; // Pixel
     }

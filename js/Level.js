@@ -30,14 +30,24 @@ export class Level {
         };
         
         // Konvertiere String-Tiles zu Nummern (falls nötig)
-        const parsedTiles = this.parseTiles(levelData.tiles);
+        // Unterstütze sowohl 'tiles' als auch 'map' als Property-Name
+        const tilesData = levelData.tiles || levelData.map;
+        const parsedTiles = this.parseTiles(tilesData);
         
         // Speichere Original-Tiles für Reset
         this.originalTiles = parsedTiles.map(row => [...row]);
         this.tiles = parsedTiles.map(row => [...row]);
         
-        this.spawnPoint = levelData.spawnPoint || { x: 64, y: 300 };
-        this.goal = levelData.goal || { x: this.width * this.tileSize - 100, y: 200, width: 64, height: 64 };
+        this.spawnPoint = levelData.spawnPoint || levelData.spawn || { x: 64, y: 300 };
+        
+        // Goal: Wenn nur x,y angegeben, ergänze width/height
+        const goalData = levelData.goal || { x: this.width * this.tileSize - 100, y: 200 };
+        this.goal = {
+            x: goalData.x,
+            y: goalData.y,
+            width: goalData.width || 64,
+            height: goalData.height || 64
+        };
         
         // Münzen aus Tiles generieren
         this.coins = [];

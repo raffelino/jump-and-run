@@ -1,0 +1,13 @@
+{
+  "name": "jump-and-run",
+  "version": "1.0.0",
+  "description": "Kathis Adventure - Ein 2D Jump'n'Run Spiel",
+  "type": "module",
+  "scripts": {
+    "generate-levels": "node generate-levels.js",
+    "serve": "python3 -m http.server 8000"
+  },
+  "keywords": ["game", "platformer", "jump-and-run"],
+  "author": "",
+  "license": "MIT"
+}

@@ -6,6 +6,7 @@ import { WorldManager } from './WorldManager.js';
 import { levelDefinitions } from './levelDefinitions.js';
 import { SaveGameManager } from './SaveGameManager.js';
 import { Logger } from './Logger.js';
+import { SoundManager } from './SoundManager.js';
 
 /**
  * Haupt-Game-Klasse - Verwaltet den gesamten Spielablauf
@@ -21,6 +22,7 @@ class Game {
         this.assetManager = new AssetManager();
         this.assetManager.generatePlaceholderSprites();
         this.saveGameManager = new SaveGameManager();
+        this.soundManager = new SoundManager();
         
         // Welten-Manager mit 5 Leveln pro Welt
         this.worldManager = new WorldManager(5);
@@ -289,13 +291,19 @@ class Game {
         
         if (!levelData) return;
         
+        // Initialisiere Sound (bei erster User-Interaktion)
+        this.soundManager.init();
+        
+        // Starte Hintergrundmusik
+        this.soundManager.playBackgroundMusic();
+        
         // Erstelle Level
         this.currentLevel = new Level(levelData, this.assetManager);
         
         // Erstelle/Reset Spieler
         const spawn = this.currentLevel.spawnPoint;
         if (!this.player) {
-            this.player = new Player(spawn.x, spawn.y, this.assetManager);
+            this.player = new Player(spawn.x, spawn.y, this.assetManager, this.soundManager);
         } else {
             this.player.reset(spawn.x, spawn.y);
         }
@@ -353,6 +361,9 @@ class Game {
             this.levelCoins += coinsCollected;
             this.totalCoins += coinsCollected;
             
+            // Spiele Münz-Sound
+            this.soundManager.playCoinSound();
+            
             // Extra Leben bei 100 Münzen
             if (this.totalCoins >= 100) {
                 this.lives++;
@@ -377,12 +388,15 @@ class Game {
         // Ziel erreicht
         if (this.currentLevel.checkGoalReached(this.player) && !this.levelComplete) {
             this.levelComplete = true;
+            this.soundManager.playLevelCompleteSound();
             this.completeLevel();
         }
         
         // Spieler gestorben (ohne Animation)
         if (!this.player.isAlive && this.gameState === 'playing') {
+            console.log('Player is dead, handling death');
             this.gameState = 'dying'; // Verhindere mehrfaches Aufrufen
+            this.soundManager.playDeathSound();
             this.playerDied();
         }
         
@@ -421,6 +435,9 @@ class Game {
         // Markiere Level als abgeschlossen
         this.worldManager.completeCurrentLevel();
         
+        // Stoppe Musik
+        this.soundManager.stopBackgroundMusic();
+        
         // Stoppe Game Loop
         if (this.animationId) {
             cancelAnimationFrame(this.animationId);
@@ -440,6 +457,9 @@ class Game {
             cancelAnimationFrame(this.animationId);
             this.animationId = null;
         }
+        
+        // Stoppe Musik
+        this.soundManager.stopBackgroundMusic();
         
         this.lives--;
         this.updateHUD();
@@ -462,6 +482,9 @@ class Game {
             cancelAnimationFrame(this.animationId);
             this.animationId = null;
         }
+        
+        // Stoppe Musik
+        this.soundManager.stopBackgroundMusic();
         
         // Zurück zum Menü nach kurzer Verzögerung
         setTimeout(() => {
@@ -492,6 +515,9 @@ class Game {
             this.animationId = null;
         }
         
+        // Stoppe Musik
+        this.soundManager.stopBackgroundMusic();
+        
         // Update Button-Stati
         const hasSave = this.saveGameManager.hasSave();
         document.getElementById('continue-game-btn').disabled = !hasSave;
@@ -515,6 +541,9 @@ class Game {
             cancelAnimationFrame(this.animationId);
             this.animationId = null;
         }
+        
+        // Stoppe Musik
+        this.soundManager.stopBackgroundMusic();
         
         // Update Menu Display
         this.updateMenuDisplay();

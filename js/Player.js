@@ -4,18 +4,22 @@ import { Logger } from './Logger.js';
  * Player Klasse - Spieler mit Physik, Kollision und Leben
  */
 export class Player {
-    constructor(x, y, assetManager) {
+    constructor(x, y, assetManager, soundManager = null) {
         this.logger = new Logger('Player');
         this.x = x;
         this.y = y;
         this.width = 32;  // Breite der Figur (schmaler)
         this.height = 85; // Höhe der Figur (von Kopf bis Schuhe: 40*scale + 2.5*scale bei scale=2)
+        this.normalHeight = 85; // Normale Höhe
+        this.crouchHeight = 32; // Geduckte Höhe (1 Tile)
         this.assetManager = assetManager;
+        this.soundManager = soundManager;
         
         // Physik
         this.velocityX = 0;
         this.velocityY = 0;
         this.speed = 4;
+        this.crouchSpeed = 2; // Langsamere Geschwindigkeit beim Ducken
         this.jumpPower = 12;
         this.gravity = 0.35;
         this.maxFallSpeed = 12;
@@ -25,6 +29,7 @@ export class Player {
         this.facingRight = true;
         this.isAlive = true;
         this.isDying = false;
+        this.isCrouching = false; // Ducken-Status
         
         // Death Animation
         this.deathAnimationTimer = 0;
@@ -42,6 +47,7 @@ export class Player {
         
         // Debug
         this.showCollisionBox = false; // Schalter für Collision-Box Visualisierung
+        this.debugFrameCounter = 0; // Für periodisches Debug-Output
     }
 
     update(inputHandler, level, deltaTime = 16) {
@@ -51,30 +57,88 @@ export class Player {
             return;
         }
         
+        // DEBUG: Frame-Counter für reduzierte Ausgabe
+        this.debugFrameCounter = (this.debugFrameCounter || 0) + 1;
+        const shouldLog = this.debugFrameCounter % 60 === 0; // Alle 60 Frames (ca. 1 Sekunde)
+        
+        if (shouldLog) {
+            console.log('=== PLAYER UPDATE DEBUG ===');
+            console.log(`Position: x=${this.x.toFixed(2)}, y=${this.y.toFixed(2)}`);
+            console.log(`Velocity: vX=${this.velocityX.toFixed(2)}, vY=${this.velocityY.toFixed(2)}`);
+            console.log(`State: isOnGround=${this.isOnGround}, isCrouching=${this.isCrouching}, height=${this.height}`);
+        }
+        
+        // Ducken-Status prüfen (Pfeil nach unten oder S-Taste)
+        const wantsToCrouch = inputHandler.isPressed('ArrowDown') || inputHandler.isPressed('s');
+        const wantsToStandUp = inputHandler.isPressed('ArrowUp') || inputHandler.isPressed('w');
+        
+        if (shouldLog && wantsToCrouch) {
+            console.log(`Crouch input detected: wantsToCrouch=${wantsToCrouch}, isOnGround=${this.isOnGround}`);
+        }
+        
+        if (wantsToStandUp && this.isCrouching) {
+            // Nach oben gedrückt - versuche aufzustehen
+            if (this.canStandUp(level, this.y)) {
+                this.isCrouching = false;
+                this.height = this.normalHeight;
+                // KEINE Y-Position Änderung
+            }
+        } else if (wantsToCrouch) {
+            // Ducken aktivieren - solange Taste gedrückt ist
+            if (!this.isCrouching && this.isOnGround) {
+                // Nur ducken wenn auf dem Boden
+                this.isCrouching = true;
+                this.height = this.crouchHeight;
+                // KEINE Y-Position Änderung - die Figur wird von oben komprimiert
+            }
+            // Wenn bereits geduckt, bleibe geduckt (auch in der Luft)
+        } else {
+            // Taste losgelassen - aufstehen, aber nur wenn genug Platz
+            if (this.isCrouching) {
+                // Prüfe ob Platz zum Aufstehen ist (aktuelle Position, volle Höhe)
+                if (this.canStandUp(level, this.y)) {
+                    this.isCrouching = false;
+                    this.height = this.normalHeight;
+                    // KEINE Y-Position Änderung
+                }
+                // Wenn nicht genug Platz, bleibe geduckt bis Platz vorhanden ist
+            }
+        }
+        
         // Bewegung
         this.velocityX = 0;
+        const currentSpeed = this.isCrouching ? this.crouchSpeed : this.speed;
         
         if (inputHandler.isLeftPressed()) {
-            this.velocityX = -this.speed;
+            this.velocityX = -currentSpeed;
             this.facingRight = false;
         }
         if (inputHandler.isRightPressed()) {
-            this.velocityX = this.speed;
+            this.velocityX = currentSpeed;
             this.facingRight = true;
         }
 
-        // Springen
-        if (inputHandler.isJumpPressed() && this.isOnGround) {
+        // Springen - nur wenn nicht geduckt
+        if (inputHandler.isJumpPressed() && this.isOnGround && !this.isCrouching) {
             this.velocityY = -this.jumpPower;
             this.isOnGround = false;
+            
+            // Spiele Sprung-Sound
+            if (this.soundManager) {
+                this.soundManager.playJumpSound();
+            }
         }
 
-        // Schwerkraft - nur wenn nicht auf dem Boden
+        // Schwerkraft anwenden - NUR wenn nicht auf dem Boden
+        // isOnGround wird in handleVerticalCollisions gesetzt
         if (!this.isOnGround) {
             this.velocityY += this.gravity;
             if (this.velocityY > this.maxFallSpeed) {
                 this.velocityY = this.maxFallSpeed;
             }
+        } else {
+            // Wenn auf dem Boden, velocity auf 0 halten
+            this.velocityY = 0;
         }
 
         // Horizontale Bewegung und Kollision
@@ -82,8 +146,14 @@ export class Player {
         this.handleHorizontalCollisions(level);
 
         // Vertikale Bewegung und Kollision
+        const yBefore = this.y;
         this.y += this.velocityY;
         this.handleVerticalCollisions(level);
+        
+        if (shouldLog) {
+            console.log(`Vertical movement: yBefore=${yBefore.toFixed(2)}, yAfter=${this.y.toFixed(2)}, delta=${(this.y - yBefore).toFixed(2)}`);
+            console.log(`After collision: velocityY=${this.velocityY.toFixed(2)}, isOnGround=${this.isOnGround}`);
+        }
 
         // Tod durch Fallen
         if (this.y > level.height * level.tileSize + 100) {
@@ -95,18 +165,23 @@ export class Player {
     }
 
     updateAnimation(deltaTime) {
+        console.log('updateAnimation called, deltaTime:', deltaTime);
         const sprites = this.assetManager.getSprite('player');
         
         // Bestimme Animations-State
         const previousState = this.animationState;
         
-        if (!this.isOnGround) {
+        if (this.isCrouching) {
+            this.animationState = 'crouch';
+        } else if (!this.isOnGround) {
             this.animationState = 'jump';
         } else if (Math.abs(this.velocityX) > 0) {
             this.animationState = 'run';
         } else {
             this.animationState = 'idle';
         }
+        
+        console.log('Current animationState:', this.animationState, 'isOnGround:', this.isOnGround);
         
         // Debug Output
         if (previousState !== this.animationState) {
@@ -119,6 +194,29 @@ export class Player {
             this.logger.groupEnd();
         }
         
+        // Debug Output im Idle-Modus
+        if (this.animationState === 'idle') {
+            this.debugFrameCounter++;
+            // Nur alle 60 Frames (ca. 1x pro Sekunde) ausgeben
+            if (this.debugFrameCounter >= 60) {
+                console.log('=== IDLE DEBUG ===', {
+                    state: this.animationState,
+                    isOnGround: this.isOnGround,
+                    isCrouching: this.isCrouching,
+                    velocityX: this.velocityX,
+                    velocityY: this.velocityY,
+                    x: this.x.toFixed(2),
+                    y: this.y.toFixed(2),
+                    height: this.height,
+                    normalHeight: this.normalHeight,
+                    crouchHeight: this.crouchHeight
+                });
+                this.debugFrameCounter = 0;
+            }
+        } else {
+            this.debugFrameCounter = 0;
+        }
+        
         // Wenn State gewechselt hat, reset Animation
         if (previousState !== this.animationState) {
             this.animationFrame = 0;
@@ -126,7 +224,8 @@ export class Player {
         }
         
         // Update Animation Frame nur bei Run und Idle (Jump ist statisch)
-        if (this.animationState !== 'jump') {
+        // Crouch hat keine Sprite-Animation, wird komplett im draw() gezeichnet
+        if (this.animationState !== 'jump' && this.animationState !== 'crouch') {
             // Akkumuliere Zeit
             this.animationTimer += deltaTime;
             
@@ -140,14 +239,16 @@ export class Player {
                 this.animationTimer -= frameDuration; // Behalte Überschuss
                 this.animationFrame++;
                 
-                // Wrap around
-                const maxFrames = sprites[this.animationState].length;
-                if (this.animationFrame >= maxFrames) {
-                    this.animationFrame = 0;
+                // Wrap around - prüfe ob sprites für diesen State existieren
+                if (sprites[this.animationState]) {
+                    const maxFrames = sprites[this.animationState].length;
+                    if (this.animationFrame >= maxFrames) {
+                        this.animationFrame = 0;
+                    }
                 }
             }
         } else {
-            // Jump hat nur einen Frame
+            // Jump und Crouch haben nur einen Frame bzw. custom rendering
             this.animationFrame = 0;
             this.animationTimer = 0;
         }
@@ -269,23 +370,29 @@ export class Player {
             }
         }
 
-        // Prüfe auch den Tile direkt UNTER dem Spieler (für isOnGround)
-        // Dies ist wichtig, wenn velocityY = 0 ist
-        const checkBottomRow = bottomTile + 1;
-        for (let col = leftTile; col <= rightTile; col++) {
-            const tile = level.getTile(col, checkBottomRow);
-            if (tile && tile.solid) {
-                // Prüfe ob Spieler genau auf diesem Tile steht
-                const playerBottom = this.y + this.height;
-                const tileTop = checkBottomRow * tileSize;
-                const distance = Math.abs(playerBottom - tileTop);
-                
-                this.logger.log(`  Checking ground below at (${col}, ${checkBottomRow}), distance: ${distance.toFixed(2)}`);
-                
-                // Wenn der Spieler innerhalb 1 Pixel vom Tile-Top ist, steht er drauf
-                if (distance <= 1) {
-                    wasOnGround = true;
-                    this.logger.log(`  -> Standing on ground!`);
+        // Prüfe ob Spieler auf dem Boden steht
+        // Wichtig: Nur prüfen wenn KEINE Kollision gefunden wurde (sonst wird Position doppelt gesetzt)
+        if (!collisionFound) {
+            // Prüfe den Tile direkt UNTER dem Spieler (für isOnGround)
+            const checkBottomRow = bottomTile + 1;
+            for (let col = leftTile; col <= rightTile; col++) {
+                const tile = level.getTile(col, checkBottomRow);
+                if (tile && tile.solid) {
+                    // Prüfe ob Spieler genau auf diesem Tile steht
+                    const playerBottom = this.y + this.height;
+                    const tileTop = checkBottomRow * tileSize;
+                    const distance = Math.abs(playerBottom - tileTop);
+                    
+                    this.logger.log(`  Checking ground below at (${col}, ${checkBottomRow}), distance: ${distance.toFixed(2)}`);
+                    
+                    // Wenn der Spieler innerhalb 1 Pixel vom Tile-Top ist, steht er drauf
+                    if (distance <= 1) {
+                        wasOnGround = true;
+                        // WICHTIG: Korrigiere Position auf exakt den Boden
+                        this.y = tileTop - this.height;
+                        this.velocityY = 0;
+                        this.logger.log(`  -> Standing on ground! Position corrected to y=${this.y}`);
+                    }
                 }
             }
         }
@@ -351,6 +458,38 @@ export class Player {
             this.velocityX = 0;
         }
         return null;
+    }
+    
+    /**
+     * Prüft ob genug Platz zum Aufstehen ist
+     * Beim Aufstehen muss nur der ZUSÄTZLICHE Platz nach oben geprüft werden
+     */
+    canStandUp(level, newY) {
+        const tileSize = level.tileSize;
+        
+        // Berechne nur die Tiles ÜBER der aktuellen geduckten Position
+        // crouchHeight = 32px (1 Tile), normalHeight = 85px
+        // Wir müssen also 85 - 32 = 53px nach oben prüfen
+        const additionalHeight = this.normalHeight - this.crouchHeight;
+        
+        const leftTile = Math.floor(this.x / tileSize);
+        const rightTile = Math.floor((this.x + this.width - 1) / tileSize);
+        
+        // Prüfe nur die Tiles über der aktuellen Position
+        const topTileOfCrouchedPlayer = Math.floor(newY / tileSize);
+        const topTileIfStanding = Math.floor((newY - additionalHeight) / tileSize);
+        
+        // Prüfe alle Tiles zwischen der geduckten Oberseite und der stehenden Oberseite
+        for (let row = topTileIfStanding; row < topTileOfCrouchedPlayer; row++) {
+            for (let col = leftTile; col <= rightTile; col++) {
+                const tile = level.getTile(col, row);
+                if (tile && tile.solid) {
+                    return false; // Blockiert durch Tile über dem Kopf
+                }
+            }
+        }
+        
+        return true; // Genug Platz nach oben
     }
 
     updateDeathAnimation(deltaTime) {
@@ -433,6 +572,13 @@ export class Player {
         const offsetX = -16; // Verschiebe Figur nach links um sie zu zentrieren
         const offsetY = 0; // Keine vertikale Verschiebung nötig
         
+        // Wenn geduckt, zeichne komprimierte Version
+        if (this.isCrouching) {
+            this.drawCrouching(ctx, screenX, screenY, scale, offsetX, offsetY);
+            // ctx.restore() wird jetzt in drawCrouching() aufgerufen
+            return;
+        }
+        
         // Animations-Werte
         let bodyBounce = 0;
         let armSwingL = 0;
@@ -452,9 +598,9 @@ export class Player {
             legSwingR = Math.sin(t * Math.PI * 2 + Math.PI) * 3 * scale;
             hairSwing = Math.sin(t * Math.PI * 4) * 3 * scale;
         } else if (this.animationState === 'idle') {
-            // Idle-Animation: Leichtes Atmen
-            const breathe = Math.sin(Date.now() * 0.002) * 1.5 * scale;
-            bodyBounce = breathe;
+            // Idle-Animation: KEINE bodyBounce, da dies zu Kollisionsproblemen führt
+            // Stattdessen nur subtile visuelle Effekte ohne Y-Verschiebung
+            bodyBounce = 0;
         }
         
         // Körper Position (mit Bounce)
@@ -666,6 +812,90 @@ export class Player {
             this.deathAnimationTimer = 0;
         }
     }
+    
+    /**
+     * Zeichnet die geduckte Spielfigur (komprimiert auf 1 Tile Höhe)
+     */
+    drawCrouching(ctx, screenX, screenY, scale, offsetX, offsetY) {
+        // Komprimierte Version: nur 1 Tile hoch (16px * scale)
+        const crouchScale = 0.5; // Halb so groß
+        
+        // Flip wenn nach links
+        if (!this.facingRight) {
+            ctx.translate(screenX + offsetX + this.width, screenY + offsetY);
+            ctx.scale(-1, 1);
+            ctx.translate(-this.width, 0);
+        } else {
+            ctx.translate(screenX + offsetX, screenY + offsetY);
+        }
+        
+        // Geduckte Figur - alles komprimiert
+        // Kopf
+        ctx.fillStyle = '#FFDAB9';
+        ctx.beginPath();
+        ctx.arc(16 * scale, 8 * scale * crouchScale, 6 * scale * crouchScale, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Haare (blond)
+        ctx.fillStyle = '#FFD700';
+        ctx.beginPath();
+        ctx.arc(16 * scale, 6 * scale * crouchScale, 7 * scale * crouchScale, Math.PI, Math.PI * 2);
+        ctx.fill();
+        
+        // Zopf (horizontal nach hinten)
+        ctx.fillRect(20 * scale, 6 * scale * crouchScale, 6 * scale, 2 * scale * crouchScale);
+        ctx.beginPath();
+        ctx.arc(26 * scale, 7 * scale * crouchScale, 1.5 * scale * crouchScale, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Körper/Kleid (komprimiert)
+        ctx.fillStyle = '#FF69B4';
+        ctx.fillRect(10 * scale, 12 * scale * crouchScale, 12 * scale, 14 * scale * crouchScale);
+        
+        // Arme (auf dem Boden)
+        ctx.fillStyle = '#FFDAB9';
+        ctx.fillRect(8 * scale, 20 * scale * crouchScale, 3 * scale, 6 * scale * crouchScale);
+        ctx.fillRect(21 * scale, 20 * scale * crouchScale, 3 * scale, 6 * scale * crouchScale);
+        
+        // Beine (angewinkelt)
+        ctx.fillRect(10 * scale, 24 * scale * crouchScale, 3 * scale, 4 * scale * crouchScale);
+        ctx.fillRect(19 * scale, 24 * scale * crouchScale, 3 * scale, 4 * scale * crouchScale);
+        
+        // Schuhe
+        ctx.fillStyle = '#FF1493';
+        ctx.fillRect(9 * scale, 27 * scale * crouchScale, 4 * scale, 2.5 * scale * crouchScale);
+        ctx.fillRect(19 * scale, 27 * scale * crouchScale, 4 * scale, 2.5 * scale * crouchScale);
+        
+        // Restore context für Collision Box
+        ctx.restore();
+        
+        // Debug: Collision Box zeichnen (auch beim Ducken)
+        if (this.showCollisionBox) {
+            ctx.save();
+            ctx.strokeStyle = 'rgba(255, 0, 0, 0.8)';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(screenX, screenY, this.width, this.height);
+            
+            // Kreuz in der Mitte
+            ctx.strokeStyle = 'rgba(0, 255, 0, 0.8)';
+            ctx.beginPath();
+            ctx.moveTo(screenX, screenY);
+            ctx.lineTo(screenX + this.width, screenY + this.height);
+            ctx.moveTo(screenX + this.width, screenY);
+            ctx.lineTo(screenX, screenY + this.height);
+            ctx.stroke();
+            
+            // Boden-Linie (wo die Füße sein sollten)
+            ctx.strokeStyle = 'rgba(0, 0, 255, 0.8)';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(screenX - 5, screenY + this.height);
+            ctx.lineTo(screenX + this.width + 5, screenY + this.height);
+            ctx.stroke();
+            
+            ctx.restore();
+        }
+    }
 
     reset(x, y) {
         this.x = x;
@@ -674,6 +904,8 @@ export class Player {
         this.velocityY = 0;
         this.isAlive = true;
         this.isDying = false;
+        this.isCrouching = false;
+        this.height = this.normalHeight;
         this.deathAnimationTimer = 0;
         this.deathRotation = 0;
         this.deathOpacity = 1;

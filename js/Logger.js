@@ -95,7 +95,7 @@ export class Logger {
 // Globale Logging-Konfiguration
 // true = Logging aktiv, false = Logging inaktiv
 Logger.config = {
-    'Player': false,
+    'Player': true,  // Aktiviert für Debugging
     'Level': false,
     'InputHandler': false,
     'Game': false,
