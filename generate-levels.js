@@ -22,35 +22,45 @@ const worlds = [
         file: 'world1.js',
         seed: 5500,
         levelCount: 5,
-        description: 'Grüne Wiesen, Plattformen und einfache Hindernisse'
+        description: 'Grüne Wiesen, Plattformen und einfache Hindernisse',
+        groundTile: 'G',
+        isCave: false
     },
     {
         name: 'Dunkle Höhlen',
         file: 'world2.js',
         seed: 7000,
         levelCount: 5,
-        description: 'Steinige Höhlen mit engen Passagen'
+        description: 'Steinige Höhlen mit engen Passagen',
+        groundTile: 'S',
+        isCave: true
     },
     {
         name: 'Brennende Wüste',
         file: 'world3.js',
         seed: 9000,
         levelCount: 5,
-        description: 'Heiße Wüste mit Lava-Fallen'
+        description: 'Heiße Wüste mit Lava-Fallen',
+        groundTile: 'S',
+        isCave: false
     },
     {
         name: 'Eisige Berge',
         file: 'world4.js',
         seed: 11000,
         levelCount: 5,
-        description: 'Rutschige Eisberge und gefrorene Plattformen'
+        description: 'Rutschige Eisberge und gefrorene Plattformen',
+        groundTile: 'I',
+        isCave: false
     },
     {
         name: 'Himmelsburg',
         file: 'world5.js',
         seed: 13000,
         levelCount: 5,
-        description: 'Wolkenplattformen hoch in den Lüften'
+        description: 'Wolkenplattformen hoch in den Lüften',
+        groundTile: 'c',
+        isCave: false
     }
 ];
 
@@ -78,14 +88,14 @@ const tileLegend = `/**
 /**
  * Konvertiert ein generiertes Level in lesbares JavaScript-Format
  */
-function levelToJavaScript(levelData, levelNumber, seed, difficulty) {
+function levelToJavaScript(levelData, levelNumber, seed, difficulty, groundTile, isCave) {
     // levelData ist ein Array von Strings (die map)
     const width = levelData[0].length;
     const height = levelData.length;
     const tileSize = 32;
     
     // Generiere Gegner für dieses Level
-    const enemies = generateEnemies(seed, width, height, difficulty, levelData);
+    const enemies = generateEnemies(seed, width, height, difficulty, levelData, groundTile, isCave);
     
     const mapString = levelData
         .map(row => `            "${row}"`)
@@ -107,6 +117,8 @@ function levelToJavaScript(levelData, levelNumber, seed, difficulty) {
     {
         width: ${width},
         height: ${height},
+        isCave: ${isCave},
+        groundTileType: "${groundTile}",
         spawn: { x: ${spawn.x}, y: ${spawn.y} },
         goal: { x: ${goal.x}, y: ${goal.y} },
         map: [
@@ -123,6 +135,7 @@ function generateWorldFile(worldConfig) {
     const levels = [];
     
     console.log(`\n🎮 Generiere ${worldConfig.name}...`);
+    console.log(`   Ground Tile: ${worldConfig.groundTile}, Höhle: ${worldConfig.isCave}`);
     
     for (let i = 0; i < worldConfig.levelCount; i++) {
         const difficulty = i + 1;
@@ -130,13 +143,33 @@ function generateWorldFile(worldConfig) {
         
         console.log(`  📍 Level ${i + 1} (Seed: ${levelSeed}, Schwierigkeit: ${difficulty})...`);
         
-        const levelData = generator.generate(levelSeed, 100, 25, difficulty);
-        levels.push({ levelData, seed: levelSeed, difficulty });
+        const levelData = generator.generate(
+            levelSeed, 
+            100, 
+            25, 
+            difficulty, 
+            worldConfig.groundTile, 
+            worldConfig.isCave
+        );
+        levels.push({ 
+            levelData, 
+            seed: levelSeed, 
+            difficulty,
+            groundTile: worldConfig.groundTile,
+            isCave: worldConfig.isCave
+        });
     }
     
     // Erstelle JavaScript-Code
     const levelsCode = levels
-        .map((level, index) => levelToJavaScript(level.levelData, index + 1, level.seed, level.difficulty))
+        .map((level, index) => levelToJavaScript(
+            level.levelData, 
+            index + 1, 
+            level.seed, 
+            level.difficulty,
+            level.groundTile,
+            level.isCave
+        ))
         .join(',\n\n');
     
     const fileContent = `/**

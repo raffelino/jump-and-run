@@ -30,6 +30,8 @@ export const world4 = {
     {
         width: 100,
         height: 25,
+        isCave: false,
+        groundTileType: "I",
         spawn: { x: 64, y: 555 },
         goal: { x: 3040, y: 575 },
         map: [
@@ -53,17 +55,17 @@ export const world4 = {
             "....................................pppppppppp......................................................",
             ".........................pppppppp...................................................................",
             "....................................................................................................",
-            "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG...GGGGGGGGGGGG.....GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG",
-            "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG...GGGGGGGGGGGG.....GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG",
-            "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG...GGGGGGGGGGGG.....GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG",
-            "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG...GGGGGGGGGGGG.....GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG",
-            "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG...GGGGGGGGGGGG.....GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG"
+            "IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII...IIIIIIIIIIII.....IIIIIIIIIIIIIIIIIIIIIIIIIIIIIII",
+            "IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII...IIIIIIIIIIII.....IIIIIIIIIIIIIIIIIIIIIIIIIIIIIII",
+            "IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII...IIIIIIIIIIII.....IIIIIIIIIIIIIIIIIIIIIIIIIIIIIII",
+            "IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII...IIIIIIIIIIII.....IIIIIIIIIIIIIIIIIIIIIIIIIIIIIII",
+            "IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII...IIIIIIIIIIII.....IIIIIIIIIIIIIIIIIIIIIIIIIIIIIII"
         ],
         enemies: [
-            { type: "walking", x: 2016, y: 608 },
-            { type: "walking", x: 1344, y: 608 },
-            { type: "walking", x: 640, y: 608 },
-            { type: "flying", x: 1696, y: 384 }
+            { type: "sliding", x: 2016, y: 608 },
+            { type: "sliding", x: 640, y: 608 },
+            { type: "walking", x: 800, y: 608 },
+            { type: "flying", x: 1472, y: 288 }
         ]
     },
 
@@ -71,6 +73,8 @@ export const world4 = {
     {
         width: 100,
         height: 25,
+        isCave: false,
+        groundTileType: "I",
         spawn: { x: 64, y: 555 },
         goal: { x: 3040, y: 575 },
         map: [
@@ -101,12 +105,12 @@ export const world4 = {
             "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG....GGGGGGGGGGGGGGGGGGGGGGG...GGG.........GGGGGGGGGGGGGGGGGGG"
         ],
         enemies: [
-            { type: "walking", x: 1216, y: 608 },
-            { type: "walking", x: 1632, y: 608 },
-            { type: "walking", x: 992, y: 608 },
-            { type: "walking", x: 1440, y: 608 },
-            { type: "flying", x: 832, y: 288 },
-            { type: "flying", x: 2400, y: 256 }
+            { type: "jumping", x: 1216, y: 608 },
+            { type: "sliding", x: 992, y: 608 },
+            { type: "sliding", x: 672, y: 608 },
+            { type: "walking", x: 2080, y: 608 },
+            { type: "flying", x: 800, y: 384 },
+            { type: "flying", x: 2304, y: 320 }
         ]
     },
 
@@ -114,6 +118,8 @@ export const world4 = {
     {
         width: 100,
         height: 25,
+        isCave: false,
+        groundTileType: "I",
         spawn: { x: 64, y: 555 },
         goal: { x: 3040, y: 575 },
         map: [
@@ -137,20 +143,20 @@ export const world4 = {
             "................cccccccc........................................cccccccccccccccc....................",
             "..............................................cccccccccccc..........................................",
             "....................................................................................................",
-            "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG...GGGGG...LLLLLLLLLL........GGGGGGGGGGGGGGGGG",
-            "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG...GGGGG...LLLLLLLLLL........GGGGGGGGGGGGGGGGG",
-            "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG...GGGGG........G............GGGGGGGGGGGGGGGGG",
-            "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG...GGGGG........G............GGGGGGGGGGGGGGGGG",
-            "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG...GGGGG........G............GGGGGGGGGGGGGGGGG"
+            "IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII...IIIII...LLLLLLLLLL........IIIIIIIIIIIIIIIII",
+            "IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII...IIIII...LLLLLLLLLL........IIIIIIIIIIIIIIIII",
+            "IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII...IIIII........I............IIIIIIIIIIIIIIIII",
+            "IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII...IIIII........I............IIIIIIIIIIIIIIIII",
+            "IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII...IIIII........I............IIIIIIIIIIIIIIIII"
         ],
         enemies: [
-            { type: "walking", x: 2112, y: 608 },
-            { type: "walking", x: 2368, y: 608 },
             { type: "walking", x: 1536, y: 608 },
-            { type: "walking", x: 672, y: 608 },
-            { type: "walking", x: 2208, y: 608 },
-            { type: "flying", x: 2016, y: 224 },
-            { type: "flying", x: 2176, y: 352 }
+            { type: "jumping", x: 1216, y: 608 },
+            { type: "sliding", x: 1536, y: 608 },
+            { type: "walking", x: 1472, y: 608 },
+            { type: "walking", x: 1856, y: 608 },
+            { type: "flying", x: 1984, y: 256 },
+            { type: "flying", x: 1376, y: 256 }
         ]
     },
 
@@ -158,6 +164,8 @@ export const world4 = {
     {
         width: 100,
         height: 25,
+        isCave: false,
+        groundTileType: "I",
         spawn: { x: 64, y: 555 },
         goal: { x: 3040, y: 575 },
         map: [
@@ -181,22 +189,23 @@ export const world4 = {
             ".....................SSSSS......pppppppppp................WW...............cccccccccc...............",
             "..................................................................cccccccc..........................",
             "....................................................................................................",
-            "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG.....LLLLLLLLLLLLLLLLLGGGG......GGGGGGG...........GGGGGGGGGGGGGGG",
-            "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG.....LLLLLLLLLLLLLLLLLGGGG......GGGGGGG...........GGGGGGGGGGGGGGG",
-            "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG.....LLLLLLLLLLLLLLLLLGGGG......GGGGGGG...........GGGGGGGGGGGGGGG",
-            "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG......GGGGGGGGGGGGGGGGGGGG......GGGGGGG...........GGGGGGGGGGGGGGG",
-            "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG......GGGGGGGGGGGGGGGGGGGG......GGGGGGG...........GGGGGGGGGGGGGGG"
+            "IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII.....LLLLLLLLLLLLLLLLLIIII......IIIIIII...........IIIIIIIIIIIIIII",
+            "IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII.....LLLLLLLLLLLLLLLLLIIII......IIIIIII...........IIIIIIIIIIIIIII",
+            "IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII.....LLLLLLLLLLLLLLLLLIIII......IIIIIII...........IIIIIIIIIIIIIII",
+            "IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII......IIIIIIIIIIIIIIIIIIII......IIIIIII...........IIIIIIIIIIIIIII",
+            "IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII......IIIIIIIIIIIIIIIIIIII......IIIIIII...........IIIIIIIIIIIIIII"
         ],
         enemies: [
-            { type: "walking", x: 1568, y: 608 },
-            { type: "walking", x: 672, y: 608 },
-            { type: "walking", x: 1632, y: 608 },
-            { type: "walking", x: 1472, y: 608 },
-            { type: "walking", x: 768, y: 608 },
-            { type: "walking", x: 2272, y: 608 },
-            { type: "flying", x: 896, y: 288 },
-            { type: "flying", x: 1024, y: 256 },
-            { type: "flying", x: 960, y: 256 }
+            { type: "sliding", x: 672, y: 608 },
+            { type: "jumping", x: 768, y: 608 },
+            { type: "sliding", x: 768, y: 608 },
+            { type: "jumping", x: 896, y: 608 },
+            { type: "jumping", x: 832, y: 608 },
+            { type: "jumping", x: 800, y: 608 },
+            { type: "flying", x: 1280, y: 352 },
+            { type: "flying", x: 800, y: 224 },
+            { type: "flying", x: 1344, y: 352 },
+            { type: "icicle", x: 1920, y: 416 }
         ]
     },
 
@@ -204,6 +213,8 @@ export const world4 = {
     {
         width: 100,
         height: 25,
+        isCave: false,
+        groundTileType: "I",
         spawn: { x: 64, y: 555 },
         goal: { x: 3040, y: 575 },
         map: [
@@ -227,24 +238,24 @@ export const world4 = {
             "......................ccccpppIIIIIIIIIIIIccccc......................................................",
             "....................................................................................................",
             "....................................................................................................",
-            "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGLLLLLLLLGGGGGLLLLLLLLLL...GGGGGGGGG........GGGGGGGGGGGGGGGGGGG",
-            "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGLLLLLLLLGGGGGLLLLLLLLLL...GGGGGGGGG........GGGGGGGGGGGGGGGGGGG",
-            "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGLLLLLLLLGGGGGLLLLLLLLLL...GGGGGGGGG........GGGGGGGGGGGGGGGGGGG",
-            "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGLLLLLLLLLL...GGGGGGGGG........GGGGGGGGGGGGGGGGGGG",
-            "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG......G......GGGGGGGGG........GGGGGGGGGGGGGGGGGGG"
+            "IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIILLLLLLLLIIIIILLLLLLLLLL...IIIIIIIII........IIIIIIIIIIIIIIIIIII",
+            "IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIILLLLLLLLIIIIILLLLLLLLLL...IIIIIIIII........IIIIIIIIIIIIIIIIIII",
+            "IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIILLLLLLLLIIIIILLLLLLLLLL...IIIIIIIII........IIIIIIIIIIIIIIIIIII",
+            "IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIILLLLLLLLLL...IIIIIIIII........IIIIIIIIIIIIIIIIIII",
+            "IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII......I......IIIIIIIII........IIIIIIIIIIIIIIIIIII"
         ],
         enemies: [
             { type: "walking", x: 2048, y: 608 },
-            { type: "walking", x: 768, y: 608 },
-            { type: "walking", x: 1760, y: 608 },
             { type: "walking", x: 672, y: 608 },
-            { type: "walking", x: 736, y: 608 },
-            { type: "walking", x: 1408, y: 608 },
             { type: "walking", x: 2080, y: 608 },
-            { type: "flying", x: 1248, y: 224 },
-            { type: "flying", x: 1344, y: 352 },
-            { type: "flying", x: 1856, y: 352 },
-            { type: "shooting", x: 1152, y: 416 }
+            { type: "sliding", x: 960, y: 608 },
+            { type: "walking", x: 1024, y: 608 },
+            { type: "sliding", x: 2112, y: 608 },
+            { type: "sliding", x: 832, y: 608 },
+            { type: "flying", x: 800, y: 256 },
+            { type: "flying", x: 1984, y: 384 },
+            { type: "flying", x: 1088, y: 256 },
+            { type: "shooting", x: 1312, y: 416 }
         ]
     }
     ]

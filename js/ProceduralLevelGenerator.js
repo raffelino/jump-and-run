@@ -75,7 +75,7 @@ export class ProceduralLevelGenerator {
     /**
      * Generiert ein Level basierend auf Seed und Schwierigkeit
      */
-    generate(seed, width, height, difficulty = 1) {
+    generate(seed, width, height, difficulty = 1, groundTile = 'G', isCave = false) {
         const rng = new SeededRandom(seed);
         
         // Initialisiere leeres Level
@@ -84,7 +84,14 @@ export class ProceduralLevelGenerator {
         // Boden erstellen (letzte 5 Zeilen)
         const groundLevel = height - 5;
         for (let row = groundLevel; row < height; row++) {
-            level[row] = 'G'.repeat(width);
+            level[row] = groundTile.repeat(width);
+        }
+        
+        // Wenn Höhle: Erstelle Decke (erste 3 Zeilen)
+        if (isCave) {
+            for (let row = 0; row < 3; row++) {
+                level[row] = groundTile.repeat(width);
+            }
         }
         
         // Löcher im Boden erstellen (schwieriger mit höherem difficulty)
@@ -461,72 +468,165 @@ export function generateWorldLevels(worldSeed, worldName, levelCount = 5) {
 /**
  * Generiert Gegner für ein Level
  */
-export function generateEnemies(seed, width, height, difficulty, tiles) {
+export function generateEnemies(seed, width, height, difficulty, tiles, groundTile = 'G', isCave = false) {
     const random = new SeededRandom(seed);
     const enemies = [];
     const groundLevel = height - 5; // Gleich wie in generate()!
     const tileSize = 32;
     
-    // Anzahl der Gegner basierend auf Schwierigkeit
-    const walkingCount = 2 + difficulty;
-    const flyingCount = 1 + Math.floor(difficulty / 2);
-    const shootingCount = Math.floor(difficulty / 3);
+    // Bestimme Welt basierend auf Seed/groundTile
+    const worldType = groundTile === 'G' ? 1 : 
+                      groundTile === 'S' && isCave ? 2 : 
+                      groundTile === 'S' ? 3 : 
+                      groundTile === 'I' ? 4 : 
+                      groundTile === 'c' ? 5 : 1;
     
-    // Walking Enemies (auf dem Boden, nur auf freien Positionen)
-    let walkingAttempts = 0;
-    for (let i = 0; i < walkingCount && walkingAttempts < walkingCount * 10; i++) {
+    // Anzahl der Gegner basierend auf Schwierigkeit
+    const baseCount = 2 + difficulty;
+    const flyingCount = 1 + Math.floor(difficulty / 2);
+    const specialCount = Math.floor(difficulty / 2);
+    
+    // World 1: Grasland - Walking, Jumping, Charger
+    if (worldType === 1) {
+        spawnGroundEnemies(enemies, tiles, random, width, groundLevel, tileSize, baseCount, ['walking', 'jumping', 'charger']);
+        spawnFlyingEnemies(enemies, random, width, groundLevel, tileSize, flyingCount, ['flying']);
+        spawnShootingEnemies(enemies, tiles, random, width, groundLevel, tileSize, Math.floor(difficulty / 3), ['shooting']);
+    }
+    
+    // World 2: Dunkle Höhlen - Walking, Stalactite, Bat
+    else if (worldType === 2) {
+        spawnGroundEnemies(enemies, tiles, random, width, groundLevel, tileSize, baseCount, ['walking', 'jumping']);
+        spawnStalactites(enemies, tiles, random, width, tileSize, specialCount);
+        spawnFlyingEnemies(enemies, random, width, groundLevel, tileSize, flyingCount, ['flying', 'bat']);
+        spawnShootingEnemies(enemies, tiles, random, width, groundLevel, tileSize, Math.floor(difficulty / 3), ['shooting']);
+    }
+    
+    // World 3: Brennende Wüste - Walking, FireElemental, Spinning
+    else if (worldType === 3) {
+        spawnGroundEnemies(enemies, tiles, random, width, groundLevel, tileSize, baseCount, ['walking', 'fireElemental', 'spinning']);
+        spawnFlyingEnemies(enemies, random, width, groundLevel, tileSize, flyingCount, ['flying']);
+        spawnShootingEnemies(enemies, tiles, random, width, groundLevel, tileSize, Math.floor(difficulty / 3), ['shooting']);
+    }
+    
+    // World 4: Eisige Berge - Walking, Sliding, Icicle
+    else if (worldType === 4) {
+        spawnGroundEnemies(enemies, tiles, random, width, groundLevel, tileSize, baseCount, ['walking', 'sliding', 'jumping']);
+        spawnFlyingEnemies(enemies, random, width, groundLevel, tileSize, flyingCount, ['flying']);
+        spawnShootingEnemies(enemies, tiles, random, width, groundLevel, tileSize, Math.floor(difficulty / 3), ['shooting', 'icicle']);
+    }
+    
+    // World 5: Himmelsburg - Cloud, Lightning, Flying
+    else if (worldType === 5) {
+        // Cloud Enemies brauchen Wolken-Plattformen
+        spawnCloudEnemies(enemies, tiles, random, width, groundLevel, tileSize, specialCount);
+        spawnFlyingEnemies(enemies, random, width, groundLevel, tileSize, flyingCount, ['flying']);
+        spawnShootingEnemies(enemies, tiles, random, width, groundLevel, tileSize, Math.floor(difficulty / 3), ['lightning']);
+    }
+    
+    return enemies;
+}
+
+// Helper: Spawn ground-based enemies
+function spawnGroundEnemies(enemies, tiles, random, width, groundLevel, tileSize, count, types) {
+    let attempts = 0;
+    for (let i = 0; i < count && attempts < count * 10; i++) {
         const col = 20 + random.range(0, width - 40);
-        const row = groundLevel - 1; // Eine Zeile über dem Boden
+        const row = groundLevel - 1;
         
-        // Prüfe ob Position gültig ist (Luft hier, Boden darunter)
         const tile = tiles[row].charAt(col);
         const groundTile = tiles[row + 1].charAt(col);
         
-        if (tile === '.' && groundTile !== '.' && groundTile !== 'o') {
+        if (tile === '.' && groundTile !== '.' && groundTile !== 'o' && groundTile !== 'L') {
+            const type = types[random.range(0, types.length - 1)];
             enemies.push({
-                type: 'walking',
-                x: col * tileSize,
-                y: row * tileSize
-            });
-        } else {
-            i--; // Versuch wiederholen
-        }
-        walkingAttempts++;
-    }
-    
-    // Flying Enemies (in der Luft)
-    for (let i = 0; i < flyingCount; i++) {
-        const col = 25 + random.range(0, width - 50);
-        const row = groundLevel - 8 - random.range(0, 5);
-        enemies.push({
-            type: 'flying',
-            x: col * tileSize,
-            y: row * tileSize
-        });
-    }
-    
-    // Shooting Enemies (auf Plattformen)
-    let shootingAttempts = 0;
-    for (let i = 0; i < shootingCount && shootingAttempts < shootingCount * 10; i++) {
-        const col = 30 + random.range(0, width - 60);
-        const row = groundLevel - 4 - random.range(0, 3);
-        
-        // Prüfe ob Position gültig ist
-        const tile = tiles[row].charAt(col);
-        const groundTile = row + 1 < tiles.length ? tiles[row + 1].charAt(col) : '.';
-        
-        if (tile === '.' && groundTile !== '.' && groundTile !== 'o') {
-            enemies.push({
-                type: 'shooting',
+                type: type,
                 x: col * tileSize,
                 y: row * tileSize
             });
         } else {
             i--;
         }
-        shootingAttempts++;
+        attempts++;
     }
-    
-    return enemies;
 }
 
+// Helper: Spawn flying enemies
+function spawnFlyingEnemies(enemies, random, width, groundLevel, tileSize, count, types) {
+    for (let i = 0; i < count; i++) {
+        const col = 25 + random.range(0, width - 50);
+        const row = groundLevel - 8 - random.range(0, 5);
+        const type = types[random.range(0, types.length - 1)];
+        enemies.push({
+            type: type,
+            x: col * tileSize,
+            y: row * tileSize
+        });
+    }
+}
+
+// Helper: Spawn shooting enemies
+function spawnShootingEnemies(enemies, tiles, random, width, groundLevel, tileSize, count, types) {
+    let attempts = 0;
+    for (let i = 0; i < count && attempts < count * 10; i++) {
+        const col = 30 + random.range(0, width - 60);
+        const row = groundLevel - 4 - random.range(0, 3);
+        
+        const tile = tiles[row].charAt(col);
+        const groundTile = row + 1 < tiles.length ? tiles[row + 1].charAt(col) : '.';
+        
+        if (tile === '.' && groundTile !== '.' && groundTile !== 'o' && groundTile !== 'L') {
+            const type = types[random.range(0, types.length - 1)];
+            enemies.push({
+                type: type,
+                x: col * tileSize,
+                y: row * tileSize
+            });
+        } else {
+            i--;
+        }
+        attempts++;
+    }
+}
+
+// Helper: Spawn stalactites (Höhlen)
+function spawnStalactites(enemies, tiles, random, width, tileSize, count) {
+    // Stalaktiten hängen von der Decke (Zeile 0-2)
+    for (let i = 0; i < count; i++) {
+        const col = 25 + random.range(0, width - 50);
+        const row = 3; // Direkt unter der Decke
+        enemies.push({
+            type: 'stalactite',
+            x: col * tileSize,
+            y: row * tileSize
+        });
+    }
+}
+
+// Helper: Spawn cloud enemies (Himmel)
+function spawnCloudEnemies(enemies, tiles, random, width, groundLevel, tileSize, count) {
+    for (let i = 0; i < count; i++) {
+        // Finde Wolken-Plattformen
+        const cloudPlatforms = [];
+        for (let row = 0; row < tiles.length; row++) {
+            for (let col = 0; col < tiles[row].length; col++) {
+                if (tiles[row].charAt(col) === 'c') {
+                    cloudPlatforms.push({
+                        x: col * tileSize,
+                        y: row * tileSize
+                    });
+                }
+            }
+        }
+        
+        if (cloudPlatforms.length > 2) {
+            // Wähle zufällige Start-Wolke
+            const startCloud = cloudPlatforms[random.range(0, cloudPlatforms.length - 1)];
+            enemies.push({
+                type: 'cloud',
+                x: startCloud.x,
+                y: startCloud.y - 34, // Über der Wolke
+                cloudPlatforms: cloudPlatforms.slice(0, Math.min(5, cloudPlatforms.length))
+            });
+        }
+    }
+}

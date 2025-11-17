@@ -31,6 +31,11 @@ export class Player {
         this.isDying = false;
         this.isCrouching = false; // Ducken-Status
         
+        // Rutsch-Mechanik für Eis
+        this.iceSlideVelocity = 0; // Aktuelle Rutsch-Geschwindigkeit auf Eis
+        this.iceSlideDeceleration = 0.15; // Wie schnell das Rutschen abbremst
+        this.isOnIce = false; // Ob Spieler auf Eis steht
+        
         // Death Animation
         this.deathAnimationTimer = 0;
         this.deathAnimationDuration = 1000; // 1 Sekunde
@@ -56,6 +61,10 @@ export class Player {
             this.updateDeathAnimation(deltaTime);
             return;
         }
+        
+        // Frame-rate Normalisierung: Bei 60 FPS ist deltaTime ~10.67ms
+        // Alle Bewegungen mit diesem Faktor multiplizieren für konstante Geschwindigkeit
+        const timeScale = deltaTime / 10.67;
         
         // DEBUG: Frame-Counter für reduzierte Ausgabe
         this.debugFrameCounter = (this.debugFrameCounter || 0) + 1;
@@ -109,13 +118,49 @@ export class Player {
         this.velocityX = 0;
         const currentSpeed = this.isCrouching ? this.crouchSpeed : this.speed;
         
+        // Prüfe ob auf Eis
+        this.checkIfOnIce(level);
+        
+        // Input-basierte Bewegung
+        let hasMovementInput = false;
         if (inputHandler.isLeftPressed()) {
             this.velocityX = -currentSpeed;
             this.facingRight = false;
+            hasMovementInput = true;
+            
+            // Bei Eis: Setze Rutsch-Geschwindigkeit
+            if (this.isOnIce) {
+                this.iceSlideVelocity = -currentSpeed;
+            }
         }
         if (inputHandler.isRightPressed()) {
             this.velocityX = currentSpeed;
             this.facingRight = true;
+            hasMovementInput = true;
+            
+            // Bei Eis: Setze Rutsch-Geschwindigkeit
+            if (this.isOnIce) {
+                this.iceSlideVelocity = currentSpeed;
+            }
+        }
+        
+        // Wenn auf Eis und keine Input-Bewegung: Rutschen
+        if (this.isOnIce && !hasMovementInput && Math.abs(this.iceSlideVelocity) > 0.1) {
+            // Weiterrutschen mit abnehmender Geschwindigkeit
+            this.velocityX = this.iceSlideVelocity;
+            
+            // Bremse das Rutschen ab (mit timeScale für konstante Verzögerung)
+            const deceleration = this.iceSlideDeceleration * timeScale;
+            if (this.iceSlideVelocity > 0) {
+                this.iceSlideVelocity -= deceleration;
+                if (this.iceSlideVelocity < 0) this.iceSlideVelocity = 0;
+            } else if (this.iceSlideVelocity < 0) {
+                this.iceSlideVelocity += deceleration;
+                if (this.iceSlideVelocity > 0) this.iceSlideVelocity = 0;
+            }
+        } else if (!this.isOnIce || hasMovementInput) {
+            // Nicht auf Eis oder aktive Bewegung: Reset Rutsch-Geschwindigkeit
+            this.iceSlideVelocity = 0;
         }
 
         // Springen - nur wenn nicht geduckt
@@ -129,10 +174,10 @@ export class Player {
             }
         }
 
-        // Schwerkraft anwenden - NUR wenn nicht auf dem Boden
+        // Schwerkraft anwenden - NUR wenn nicht auf dem Boden (mit timeScale)
         // isOnGround wird in handleVerticalCollisions gesetzt
         if (!this.isOnGround) {
-            this.velocityY += this.gravity;
+            this.velocityY += this.gravity * timeScale;
             if (this.velocityY > this.maxFallSpeed) {
                 this.velocityY = this.maxFallSpeed;
             }
@@ -141,13 +186,13 @@ export class Player {
             this.velocityY = 0;
         }
 
-        // Horizontale Bewegung und Kollision
-        this.x += this.velocityX;
+        // Horizontale Bewegung und Kollision (mit timeScale)
+        this.x += this.velocityX * timeScale;
         this.handleHorizontalCollisions(level);
 
-        // Vertikale Bewegung und Kollision
+        // Vertikale Bewegung und Kollision (mit timeScale)
         const yBefore = this.y;
-        this.y += this.velocityY;
+        this.y += this.velocityY * timeScale;
         this.handleVerticalCollisions(level);
         
         if (shouldLog) {
@@ -586,6 +631,8 @@ export class Player {
         let legSwingL = 0;
         let legSwingR = 0;
         let hairSwing = 0;
+        let armRaiseL = 0; // Für Sprung-Animation
+        let armRaiseR = 0; // Für Sprung-Animation
         
         if (this.animationState === 'run') {
             // Lauf-Animation mit smootherer Bewegung
@@ -601,6 +648,10 @@ export class Player {
             // Idle-Animation: KEINE bodyBounce, da dies zu Kollisionsproblemen führt
             // Stattdessen nur subtile visuelle Effekte ohne Y-Verschiebung
             bodyBounce = 0;
+        } else if (this.animationState === 'jump') {
+            // Sprung-Animation: Arme nach oben
+            armRaiseL = -10 * scale; // Nach oben verschieben
+            armRaiseR = -10 * scale; // Nach oben verschieben
         }
         
         // Körper Position (mit Bounce)
@@ -661,7 +712,7 @@ export class Player {
         ctx.fillStyle = '#FFDAB9';
         
         // Linker Arm (hinter Körper)
-        const leftArmY = (20 * scale) - bodyBounce + armSwingL;
+        const leftArmY = (20 * scale) - bodyBounce + armSwingL + armRaiseL;
         ctx.fillRect(10 * scale, leftArmY, 3 * scale, 8 * scale);
         // Hand
         ctx.beginPath();
@@ -669,7 +720,7 @@ export class Player {
         ctx.fill();
         
         // Rechter Arm (vor Körper)
-        const rightArmY = (20 * scale) - bodyBounce + armSwingR;
+        const rightArmY = (20 * scale) - bodyBounce + armSwingR + armRaiseR;
         ctx.fillRect(19 * scale, rightArmY, 3 * scale, 8 * scale);
         // Hand
         ctx.beginPath();
@@ -914,6 +965,32 @@ export class Player {
         this.animationFrame = 0;
         this.animationTimer = 0;
         this.animationState = 'idle';
+        this.iceSlideVelocity = 0;
+        this.isOnIce = false;
+    }
+
+    checkIfOnIce(level) {
+        // Prüfe ob Spieler auf dem Boden steht
+        if (!this.isOnGround) {
+            this.isOnIce = false;
+            return;
+        }
+        
+        // Prüfe Tiles direkt unter den Füßen
+        const tileSize = level.tileSize;
+        const leftTile = Math.floor(this.x / tileSize);
+        const rightTile = Math.floor((this.x + this.width - 1) / tileSize);
+        const bottomTile = Math.floor((this.y + this.height) / tileSize);
+        
+        // Prüfe die Tiles direkt unter dem Spieler
+        this.isOnIce = false;
+        for (let col = leftTile; col <= rightTile; col++) {
+            const tile = level.getTile(col, bottomTile);
+            if (tile && tile.slippery) {
+                this.isOnIce = true;
+                break;
+            }
+        }
     }
 
     getBounds() {

@@ -99,20 +99,20 @@ body {
 .main-menu-buttons {
     display: flex;
     flex-direction: column;
-    gap: 25px;
+    gap: 15px;
 }
 
 .menu-button {
     background: linear-gradient(to bottom, #FFD700, #FFA500);
     border: 3px solid #FF8C00;
-    padding: 25px 80px;
-    font-size: 26px;
+    padding: 15px 60px;
+    font-size: 22px;
     font-weight: bold;
     color: #000;
     cursor: pointer;
     border-radius: 10px;
     transition: all 0.2s;
-    min-width: 500px;
+    min-width: 450px;
     text-shadow: 1px 1px 2px rgba(255,255,255,0.5);
     box-shadow: 0 4px 10px rgba(0,0,0,0.3);
 }

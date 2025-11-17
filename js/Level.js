@@ -1,13 +1,18 @@
 import { Coin } from './Coin.js';
-import { WalkingEnemy, FlyingEnemy, ShootingEnemy } from './Enemy.js';
+import { WalkingEnemy, FlyingEnemy, ShootingEnemy, JumpingEnemy, ChargerEnemy, 
+         StalactiteEnemy, BatEnemy, FireElemental, SpinningEnemy, SlidingEnemy, 
+         IcicleEnemy, CloudEnemy, LightningEnemy } from './Enemy.js';
 
 /**
  * Level Klasse - Tile-basiertes Level-System
  * Unterstützt verschiedene Tile-Typen und einfaches Level-Design
  */
 export class Level {
-    constructor(levelData, assetManager) {
+    constructor(levelData, assetManager, worldName = 'Grasland') {
         this.assetManager = assetManager;
+        this.worldName = worldName;
+        this.isCave = levelData.isCave || false; // Ob Level eine Höhle ist
+        this.groundTileType = levelData.groundTileType || 'G'; // Welcher Tile-Typ für Boden
         this.tileSize = 32;
         this.width = levelData.width;
         this.height = levelData.height;
@@ -88,19 +93,49 @@ export class Level {
     }
 
     /**
-     * Generiere dekorative Hintergrundelemente (Bäume, Wolken)
+     * Generiere dekorative Hintergrundelemente (weltspezifisch)
      */
     generateBackgroundElements() {
         const elements = {
             trees: [],
-            clouds: []
+            clouds: [],
+            rocks: [],
+            stalactites: [],
+            cacti: [],
+            icecrystals: [],
+            stars: []
         };
         
         const levelWidth = this.width * this.tileSize;
         const levelHeight = this.height * this.tileSize;
         
-        // Generiere Bäume (am Boden)
-        const treeCount = Math.floor(this.width / 10); // Alle ~10 Tiles ein Baum
+        // Weltspezifische Generierung
+        switch(this.worldName) {
+            case 'Grasland':
+                this.generateGrasslandElements(elements, levelWidth, levelHeight);
+                break;
+            case 'Dunkle Höhlen':
+                this.generateCaveElements(elements, levelWidth, levelHeight);
+                break;
+            case 'Brennende Wüste':
+                this.generateDesertElements(elements, levelWidth, levelHeight);
+                break;
+            case 'Eisige Berge':
+                this.generateIceElements(elements, levelWidth, levelHeight);
+                break;
+            case 'Himmelsburg':
+                this.generateSkyElements(elements, levelWidth, levelHeight);
+                break;
+            default:
+                this.generateGrasslandElements(elements, levelWidth, levelHeight);
+        }
+        
+        return elements;
+    }
+
+    generateGrasslandElements(elements, levelWidth, levelHeight) {
+        // Bäume (am Boden)
+        const treeCount = Math.floor(this.width / 10);
         for (let i = 0; i < treeCount; i++) {
             const x = Math.random() * levelWidth;
             const groundY = this.findGroundAt(x);
@@ -109,29 +144,152 @@ export class Level {
                 elements.trees.push({
                     x: x,
                     y: groundY,
-                    height: 80 + Math.random() * 40, // 80-120px hoch
-                    trunkWidth: 12 + Math.random() * 8, // 12-20px breit
-                    crownRadius: 30 + Math.random() * 20, // 30-50px Radius
-                    crownColor: Math.random() > 0.5 ? '#228B22' : '#2E8B57', // Verschiedene Grüntöne
-                    swayOffset: Math.random() * Math.PI * 2 // Für Animation
+                    height: 80 + Math.random() * 40,
+                    trunkWidth: 12 + Math.random() * 8,
+                    crownRadius: 30 + Math.random() * 20,
+                    crownColor: Math.random() > 0.5 ? '#228B22' : '#2E8B57',
+                    swayOffset: Math.random() * Math.PI * 2
                 });
             }
         }
         
-        // Generiere Wolken (am Himmel)
+        // Wolken (am Himmel)
         const cloudCount = Math.floor(this.width / 8);
         for (let i = 0; i < cloudCount; i++) {
             elements.clouds.push({
                 x: Math.random() * levelWidth,
-                y: Math.random() * (levelHeight * 0.3), // Obere 30% des Levels
-                width: 60 + Math.random() * 40, // 60-100px breit
-                height: 30 + Math.random() * 20, // 30-50px hoch
-                speed: 0.1 + Math.random() * 0.3, // Langsame Bewegung
+                y: Math.random() * (levelHeight * 0.3),
+                width: 60 + Math.random() * 40,
+                height: 30 + Math.random() * 20,
+                speed: 0.1 + Math.random() * 0.3,
                 opacity: 0.6 + Math.random() * 0.3
             });
         }
+    }
+
+    generateCaveElements(elements, levelWidth, levelHeight) {
+        // Stalaktiten (von der Decke hängend)
+        const stalactiteCount = Math.floor(this.width / 6);
+        for (let i = 0; i < stalactiteCount; i++) {
+            elements.stalactites.push({
+                x: Math.random() * levelWidth,
+                y: 0,
+                length: 40 + Math.random() * 80,
+                width: 15 + Math.random() * 15,
+                color: '#696969'
+            });
+        }
         
-        return elements;
+        // Felsen am Boden
+        const rockCount = Math.floor(this.width / 8);
+        for (let i = 0; i < rockCount; i++) {
+            const x = Math.random() * levelWidth;
+            const groundY = this.findGroundAt(x);
+            
+            if (groundY !== null) {
+                elements.rocks.push({
+                    x: x,
+                    y: groundY,
+                    width: 30 + Math.random() * 40,
+                    height: 20 + Math.random() * 30,
+                    color: Math.random() > 0.5 ? '#808080' : '#696969'
+                });
+            }
+        }
+    }
+
+    generateDesertElements(elements, levelWidth, levelHeight) {
+        // Kakteen
+        const cactusCount = Math.floor(this.width / 12);
+        for (let i = 0; i < cactusCount; i++) {
+            const x = Math.random() * levelWidth;
+            const groundY = this.findGroundAt(x);
+            
+            if (groundY !== null) {
+                elements.cacti.push({
+                    x: x,
+                    y: groundY,
+                    height: 40 + Math.random() * 60,
+                    width: 20 + Math.random() * 15,
+                    armLeft: Math.random() > 0.5,
+                    armRight: Math.random() > 0.5,
+                    armHeight: 20 + Math.random() * 20
+                });
+            }
+        }
+        
+        // Weniger Wolken, mehr transparent (heiß und dunstig)
+        const cloudCount = Math.floor(this.width / 15);
+        for (let i = 0; i < cloudCount; i++) {
+            elements.clouds.push({
+                x: Math.random() * levelWidth,
+                y: Math.random() * (levelHeight * 0.2),
+                width: 80 + Math.random() * 60,
+                height: 25 + Math.random() * 15,
+                speed: 0.05 + Math.random() * 0.15,
+                opacity: 0.2 + Math.random() * 0.2
+            });
+        }
+    }
+
+    generateIceElements(elements, levelWidth, levelHeight) {
+        // Eiskristalle/Eiszapfen
+        const crystalCount = Math.floor(this.width / 5);
+        for (let i = 0; i < crystalCount; i++) {
+            elements.icecrystals.push({
+                x: Math.random() * levelWidth,
+                y: Math.random() * (levelHeight * 0.4),
+                size: 10 + Math.random() * 25,
+                rotation: Math.random() * Math.PI * 2,
+                sparkle: Math.random() * Math.PI * 2
+            });
+        }
+        
+        // Felsen mit Schnee
+        const rockCount = Math.floor(this.width / 10);
+        for (let i = 0; i < rockCount; i++) {
+            const x = Math.random() * levelWidth;
+            const groundY = this.findGroundAt(x);
+            
+            if (groundY !== null) {
+                elements.rocks.push({
+                    x: x,
+                    y: groundY,
+                    width: 35 + Math.random() * 45,
+                    height: 25 + Math.random() * 35,
+                    color: '#B0C4DE',
+                    hasSnow: true
+                });
+            }
+        }
+    }
+
+    generateSkyElements(elements, levelWidth, levelHeight) {
+        // Sterne
+        const starCount = Math.floor(this.width / 3);
+        for (let i = 0; i < starCount; i++) {
+            elements.stars.push({
+                x: Math.random() * levelWidth,
+                y: Math.random() * (levelHeight * 0.5),
+                size: 2 + Math.random() * 4,
+                twinkle: Math.random() * Math.PI * 2,
+                brightness: 0.5 + Math.random() * 0.5
+            });
+        }
+        
+        // Viele helle Wolken
+        const cloudCount = Math.floor(this.width / 5);
+        for (let i = 0; i < cloudCount; i++) {
+            elements.clouds.push({
+                x: Math.random() * levelWidth,
+                y: Math.random() * (levelHeight * 0.6),
+                width: 70 + Math.random() * 50,
+                height: 35 + Math.random() * 25,
+                speed: 0.15 + Math.random() * 0.4,
+                opacity: 0.7 + Math.random() * 0.3,
+                isFluffy: true
+            });
+        }
     }
 
     /**
@@ -219,6 +377,36 @@ export class Level {
                 case 'shooting':
                     enemy = new ShootingEnemy(data.x, data.y);
                     break;
+                case 'jumping':
+                    enemy = new JumpingEnemy(data.x, data.y);
+                    break;
+                case 'charger':
+                    enemy = new ChargerEnemy(data.x, data.y);
+                    break;
+                case 'stalactite':
+                    enemy = new StalactiteEnemy(data.x, data.y);
+                    break;
+                case 'bat':
+                    enemy = new BatEnemy(data.x, data.y);
+                    break;
+                case 'fireElemental':
+                    enemy = new FireElemental(data.x, data.y);
+                    break;
+                case 'spinning':
+                    enemy = new SpinningEnemy(data.x, data.y);
+                    break;
+                case 'sliding':
+                    enemy = new SlidingEnemy(data.x, data.y);
+                    break;
+                case 'icicle':
+                    enemy = new IcicleEnemy(data.x, data.y);
+                    break;
+                case 'cloud':
+                    enemy = new CloudEnemy(data.x, data.y, data.cloudPlatforms || []);
+                    break;
+                case 'lightning':
+                    enemy = new LightningEnemy(data.x, data.y);
+                    break;
             }
             if (enemy) {
                 this.enemies.push(enemy);
@@ -226,35 +414,42 @@ export class Level {
         });
     }
 
-    update(player) {
+    update(player, deltaTime = 16) {
+        // Frame-rate Normalisierung
+        const timeScale = deltaTime / 16.67;
+        
         this.coins.forEach(coin => coin.update());
         
-        // Lava Animation
-        this.lavaAnimationTimer += 16; // ca. 60fps
+        // Lava Animation (mit timeScale)
+        this.lavaAnimationTimer += deltaTime;
         if (this.lavaAnimationTimer >= 200) {
             this.lavaAnimationTimer = 0;
             this.lavaAnimationFrame = (this.lavaAnimationFrame + 1) % 3;
         }
         
-        // Café Fahnen-Animation
-        this.flagWave += this.flagSpeed;
+        // Café Fahnen-Animation (mit timeScale)
+        this.flagWave += this.flagSpeed * timeScale;
         
-        // Update Wolken (Bewegung)
+        // Update Wolken (Bewegung mit timeScale)
         const levelWidth = this.width * this.tileSize;
         this.backgroundElements.clouds.forEach(cloud => {
-            cloud.x += cloud.speed;
+            cloud.x += cloud.speed * timeScale;
             // Wrap around wenn Wolke rechts raus ist
             if (cloud.x > levelWidth + cloud.width) {
                 cloud.x = -cloud.width;
             }
         });
         
-        // Update Gegner
+        // Update Gegner (mit timeScale)
         this.enemies.forEach(enemy => {
-            if (enemy instanceof ShootingEnemy) {
-                enemy.update(this, player);
+            // Diese Gegner brauchen Player-Referenz
+            if (enemy instanceof ShootingEnemy || 
+                enemy instanceof ChargerEnemy || 
+                enemy instanceof StalactiteEnemy ||
+                enemy instanceof IcicleEnemy) {
+                enemy.update(this, player, timeScale);
             } else {
-                enemy.update(this);
+                enemy.update(this, timeScale);
             }
         });
     }
@@ -264,6 +459,9 @@ export class Level {
         const endCol = Math.ceil((camera.x + camera.width) / this.tileSize);
         const startRow = Math.floor(camera.y / this.tileSize);
         const endRow = Math.ceil((camera.y + camera.height) / this.tileSize);
+
+        // Zeichne Himmel/Höhlen-Hintergrund
+        this.drawBackground(ctx, camera);
 
         // Zeichne Hintergrundelemente ZUERST (hinter allem)
         this.drawBackgroundElements(ctx, camera);
@@ -307,17 +505,86 @@ export class Level {
     /**
      * Zeichne dekorative Hintergrundelemente
      */
-    drawBackgroundElements(ctx, camera) {
-        // Wolken (im Himmel)
-        this.backgroundElements.clouds.forEach(cloud => {
-            const x = cloud.x - camera.x;
-            const y = cloud.y - camera.y;
+    drawBackground(ctx, camera) {
+        if (this.isCave) {
+            // Dunkler Höhlen-Hintergrund
+            const gradient = ctx.createLinearGradient(0, 0, 0, camera.height);
+            gradient.addColorStop(0, '#1a1a1a');
+            gradient.addColorStop(1, '#2d2d2d');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, camera.width, camera.height);
+        } else {
+            // Himmel-Gradient je nach Welt
+            let skyGradient;
             
-            // Nur zeichnen wenn im sichtbaren Bereich
+            switch(this.worldName) {
+                case 'Brennende Wüste':
+                    skyGradient = ctx.createLinearGradient(0, 0, 0, camera.height);
+                    skyGradient.addColorStop(0, '#FFB347'); // Orange
+                    skyGradient.addColorStop(1, '#87CEEB');
+                    break;
+                case 'Eisige Berge':
+                    skyGradient = ctx.createLinearGradient(0, 0, 0, camera.height);
+                    skyGradient.addColorStop(0, '#B0E0E6'); // Eisblau
+                    skyGradient.addColorStop(1, '#E0FFFF');
+                    break;
+                case 'Himmelsburg':
+                    skyGradient = ctx.createLinearGradient(0, 0, 0, camera.height);
+                    skyGradient.addColorStop(0, '#191970'); // Dunkelblau
+                    skyGradient.addColorStop(0.5, '#4169E1');
+                    skyGradient.addColorStop(1, '#87CEEB');
+                    break;
+                default: // Grasland & Default
+                    skyGradient = ctx.createLinearGradient(0, 0, 0, camera.height);
+                    skyGradient.addColorStop(0, '#87CEEB'); // Himmelblau
+                    skyGradient.addColorStop(1, '#B0E0E6');
+            }
+            
+            ctx.fillStyle = skyGradient;
+            ctx.fillRect(0, 0, camera.width, camera.height);
+        }
+    }
+
+    /**
+     * Zeichne dekorative Hintergrundelemente
+     */
+    drawBackgroundElements(ctx, camera) {
+        // Sterne (Himmelsburg)
+        this.backgroundElements.stars.forEach(star => {
+            const x = star.x - camera.x * 0.5; // Parallax
+            const y = star.y - camera.y * 0.5;
+            
+            if (x > -10 && x < camera.width + 10 && y > -10 && y < camera.height + 10) {
+                const twinkle = Math.sin(Date.now() * 0.003 + star.twinkle) * 0.3 + 0.7;
+                ctx.save();
+                ctx.globalAlpha = star.brightness * twinkle;
+                ctx.fillStyle = '#FFFFFF';
+                
+                // Stern (4 Punkte)
+                ctx.beginPath();
+                for (let i = 0; i < 4; i++) {
+                    const angle = (i * Math.PI / 2);
+                    const px = x + Math.cos(angle) * star.size;
+                    const py = y + Math.sin(angle) * star.size;
+                    if (i === 0) ctx.moveTo(px, py);
+                    else ctx.lineTo(px, py);
+                }
+                ctx.closePath();
+                ctx.fill();
+                
+                ctx.restore();
+            }
+        });
+        
+        // Wolken (alle Welten außer Höhlen)
+        this.backgroundElements.clouds.forEach(cloud => {
+            const x = cloud.x - camera.x * 0.8; // Parallax
+            const y = cloud.y - camera.y * 0.8;
+            
             if (x + cloud.width > 0 && x < camera.width && y + cloud.height > 0 && y < camera.height) {
                 ctx.save();
                 ctx.globalAlpha = cloud.opacity;
-                ctx.fillStyle = '#FFFFFF';
+                ctx.fillStyle = cloud.isFluffy ? '#FFFACD' : '#FFFFFF';
                 
                 // Wolke aus mehreren Kreisen
                 ctx.beginPath();
@@ -330,12 +597,178 @@ export class Level {
             }
         });
         
-        // Bäume (am Boden)
+        // Stalaktiten (Höhlen)
+        this.backgroundElements.stalactites.forEach(stalactite => {
+            const x = stalactite.x - camera.x;
+            const y = stalactite.y - camera.y;
+            
+            if (x > -stalactite.width && x < camera.width && y < camera.height) {
+                ctx.save();
+                ctx.fillStyle = stalactite.color;
+                
+                // Dreieckige Form (Stalaktit)
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                ctx.lineTo(x - stalactite.width / 2, y);
+                ctx.lineTo(x, y + stalactite.length);
+                ctx.lineTo(x + stalactite.width / 2, y);
+                ctx.closePath();
+                ctx.fill();
+                
+                // Highlight für 3D-Effekt
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                ctx.lineTo(x - stalactite.width / 4, y);
+                ctx.lineTo(x, y + stalactite.length * 0.7);
+                ctx.closePath();
+                ctx.fill();
+                
+                ctx.restore();
+            }
+        });
+        
+        // Felsen (Höhlen & Eis)
+        this.backgroundElements.rocks.forEach(rock => {
+            const x = rock.x - camera.x;
+            const y = rock.y - camera.y;
+            
+            if (x + rock.width > 0 && x < camera.width) {
+                ctx.save();
+                ctx.fillStyle = rock.color;
+                
+                // Unregelmäßige Felsenform
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                ctx.lineTo(x + rock.width * 0.3, y - rock.height * 0.8);
+                ctx.lineTo(x + rock.width * 0.7, y - rock.height);
+                ctx.lineTo(x + rock.width, y - rock.height * 0.6);
+                ctx.lineTo(x + rock.width * 0.9, y);
+                ctx.closePath();
+                ctx.fill();
+                
+                // Schnee auf Felsen (Eiswelt)
+                if (rock.hasSnow) {
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.beginPath();
+                    ctx.moveTo(x + rock.width * 0.3, y - rock.height * 0.8);
+                    ctx.lineTo(x + rock.width * 0.7, y - rock.height);
+                    ctx.lineTo(x + rock.width * 0.6, y - rock.height * 0.9);
+                    ctx.lineTo(x + rock.width * 0.4, y - rock.height * 0.7);
+                    ctx.closePath();
+                    ctx.fill();
+                }
+                
+                ctx.restore();
+            }
+        });
+        
+        // Kakteen (Wüste)
+        this.backgroundElements.cacti.forEach(cactus => {
+            const x = cactus.x - camera.x;
+            const y = cactus.y - camera.y;
+            
+            if (x + cactus.width > 0 && x < camera.width) {
+                ctx.save();
+                ctx.fillStyle = '#228B22';
+                
+                // Hauptkörper
+                ctx.fillRect(x - cactus.width / 2, y - cactus.height, cactus.width, cactus.height);
+                
+                // Linker Arm
+                if (cactus.armLeft) {
+                    ctx.fillRect(
+                        x - cactus.width / 2 - cactus.width * 0.6,
+                        y - cactus.height * 0.6,
+                        cactus.width * 0.6,
+                        cactus.armHeight
+                    );
+                    ctx.fillRect(
+                        x - cactus.width / 2 - cactus.width * 0.6,
+                        y - cactus.height * 0.6 - cactus.armHeight,
+                        cactus.width * 0.6,
+                        cactus.armHeight
+                    );
+                }
+                
+                // Rechter Arm
+                if (cactus.armRight) {
+                    ctx.fillRect(
+                        x + cactus.width / 2,
+                        y - cactus.height * 0.7,
+                        cactus.width * 0.6,
+                        cactus.armHeight
+                    );
+                    ctx.fillRect(
+                        x + cactus.width / 2,
+                        y - cactus.height * 0.7 - cactus.armHeight,
+                        cactus.width * 0.6,
+                        cactus.armHeight
+                    );
+                }
+                
+                // Stacheln (kleine Linien)
+                ctx.strokeStyle = '#1a5c1a';
+                ctx.lineWidth = 1;
+                for (let i = 0; i < 8; i++) {
+                    const sy = y - cactus.height + (i * cactus.height / 8);
+                    ctx.beginPath();
+                    ctx.moveTo(x - cactus.width / 2, sy);
+                    ctx.lineTo(x - cactus.width / 2 - 3, sy);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(x + cactus.width / 2, sy);
+                    ctx.lineTo(x + cactus.width / 2 + 3, sy);
+                    ctx.stroke();
+                }
+                
+                ctx.restore();
+            }
+        });
+        
+        // Eiskristalle (Eiswelt)
+        this.backgroundElements.icecrystals.forEach(crystal => {
+            const x = crystal.x - camera.x * 0.7; // Parallax
+            const y = crystal.y - camera.y * 0.7;
+            
+            if (x > -crystal.size && x < camera.width + crystal.size && y > -crystal.size && y < camera.height + crystal.size) {
+                const sparkle = Math.sin(Date.now() * 0.002 + crystal.sparkle) * 0.3 + 0.7;
+                
+                ctx.save();
+                ctx.translate(x, y);
+                ctx.rotate(crystal.rotation);
+                ctx.globalAlpha = sparkle;
+                
+                // Kristall (Raute)
+                ctx.fillStyle = '#B0E0E6';
+                ctx.beginPath();
+                ctx.moveTo(0, -crystal.size);
+                ctx.lineTo(crystal.size * 0.6, 0);
+                ctx.lineTo(0, crystal.size);
+                ctx.lineTo(-crystal.size * 0.6, 0);
+                ctx.closePath();
+                ctx.fill();
+                
+                // Glanz
+                ctx.fillStyle = '#FFFFFF';
+                ctx.globalAlpha = sparkle * 0.5;
+                ctx.beginPath();
+                ctx.moveTo(0, -crystal.size * 0.7);
+                ctx.lineTo(crystal.size * 0.3, -crystal.size * 0.2);
+                ctx.lineTo(0, crystal.size * 0.3);
+                ctx.lineTo(-crystal.size * 0.2, 0);
+                ctx.closePath();
+                ctx.fill();
+                
+                ctx.restore();
+            }
+        });
+        
+        // Bäume (Grasland)
         this.backgroundElements.trees.forEach(tree => {
             const x = tree.x - camera.x;
             const y = tree.y - camera.y;
             
-            // Nur zeichnen wenn im sichtbaren Bereich
             if (x + tree.crownRadius > 0 && x - tree.crownRadius < camera.width) {
                 ctx.save();
                 
@@ -589,6 +1022,35 @@ export class Level {
         for (let enemy of this.enemies) {
             if (enemy instanceof ShootingEnemy) {
                 if (enemy.checkFireballCollisions(player)) {
+                    return { hit: true, enemyBounce: false };
+                }
+            }
+        }
+        
+        // Prüfe FireElemental Feuer-Spuren
+        for (let enemy of this.enemies) {
+            if (enemy instanceof FireElemental) {
+                if (enemy.checkFireTrailCollision(player)) {
+                    return { hit: true, enemyBounce: false };
+                }
+            }
+        }
+        
+        // Prüfe IcicleEnemy Projektile
+        for (let enemy of this.enemies) {
+            if (enemy instanceof IcicleEnemy) {
+                const slowEffect = enemy.checkIcicleCollision(player);
+                if (slowEffect === 'slow') {
+                    // TODO: Implement slow effect on player
+                    return { hit: true, enemyBounce: false };
+                }
+            }
+        }
+        
+        // Prüfe Lightning
+        for (let enemy of this.enemies) {
+            if (enemy instanceof LightningEnemy) {
+                if (enemy.checkLightningCollision(player, this)) {
                     return { hit: true, enemyBounce: false };
                 }
             }

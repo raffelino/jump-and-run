@@ -30,6 +30,8 @@ export const world1 = {
     {
         width: 100,
         height: 25,
+        isCave: false,
+        groundTileType: "G",
         spawn: { x: 64, y: 555 },
         goal: { x: 3040, y: 575 },
         map: [
@@ -61,9 +63,9 @@ export const world1 = {
         ],
         enemies: [
             { type: "walking", x: 1600, y: 608 },
-            { type: "walking", x: 1024, y: 608 },
-            { type: "walking", x: 2496, y: 608 },
-            { type: "flying", x: 1408, y: 352 }
+            { type: "jumping", x: 2496, y: 608 },
+            { type: "walking", x: 992, y: 608 },
+            { type: "flying", x: 1184, y: 288 }
         ]
     },
 
@@ -71,6 +73,8 @@ export const world1 = {
     {
         width: 100,
         height: 25,
+        isCave: false,
+        groundTileType: "G",
         spawn: { x: 64, y: 555 },
         goal: { x: 3040, y: 575 },
         map: [
@@ -102,11 +106,11 @@ export const world1 = {
         ],
         enemies: [
             { type: "walking", x: 1408, y: 608 },
-            { type: "walking", x: 928, y: 608 },
-            { type: "walking", x: 896, y: 608 },
-            { type: "walking", x: 2080, y: 608 },
-            { type: "flying", x: 1312, y: 384 },
-            { type: "flying", x: 832, y: 256 }
+            { type: "charger", x: 896, y: 608 },
+            { type: "walking", x: 864, y: 608 },
+            { type: "walking", x: 1472, y: 608 },
+            { type: "flying", x: 2144, y: 256 },
+            { type: "flying", x: 1280, y: 224 }
         ]
     },
 
@@ -114,6 +118,8 @@ export const world1 = {
     {
         width: 100,
         height: 25,
+        isCave: false,
+        groundTileType: "G",
         spawn: { x: 64, y: 555 },
         goal: { x: 3040, y: 575 },
         map: [
@@ -144,14 +150,14 @@ export const world1 = {
             "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG.....GGGG.....GGGGGGGGGG.......GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG"
         ],
         enemies: [
-            { type: "walking", x: 1408, y: 608 },
+            { type: "jumping", x: 736, y: 608 },
             { type: "walking", x: 736, y: 608 },
-            { type: "walking", x: 1376, y: 608 },
-            { type: "walking", x: 1472, y: 608 },
-            { type: "walking", x: 2048, y: 608 },
-            { type: "flying", x: 896, y: 384 },
-            { type: "flying", x: 1536, y: 224 },
-            { type: "shooting", x: 1856, y: 448 }
+            { type: "charger", x: 2464, y: 608 },
+            { type: "jumping", x: 1920, y: 608 },
+            { type: "jumping", x: 2432, y: 608 },
+            { type: "flying", x: 992, y: 224 },
+            { type: "flying", x: 1184, y: 256 },
+            { type: "shooting", x: 2048, y: 448 }
         ]
     },
 
@@ -159,6 +165,8 @@ export const world1 = {
     {
         width: 100,
         height: 25,
+        isCave: false,
+        groundTileType: "G",
         spawn: { x: 64, y: 555 },
         goal: { x: 3040, y: 575 },
         map: [
@@ -189,16 +197,16 @@ export const world1 = {
             "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG........GGGGGGGGGGGGGG...GGGG...GGGGGGGGGGGGGGGGGGGG"
         ],
         enemies: [
-            { type: "walking", x: 2560, y: 608 },
-            { type: "walking", x: 1824, y: 608 },
-            { type: "walking", x: 2336, y: 608 },
+            { type: "jumping", x: 2560, y: 608 },
             { type: "walking", x: 736, y: 608 },
-            { type: "walking", x: 736, y: 608 },
-            { type: "walking", x: 1184, y: 608 },
-            { type: "flying", x: 2080, y: 384 },
-            { type: "flying", x: 864, y: 352 },
-            { type: "flying", x: 2080, y: 256 },
-            { type: "shooting", x: 2144, y: 416 }
+            { type: "charger", x: 1184, y: 608 },
+            { type: "walking", x: 896, y: 608 },
+            { type: "charger", x: 1024, y: 608 },
+            { type: "jumping", x: 2048, y: 608 },
+            { type: "flying", x: 2272, y: 256 },
+            { type: "flying", x: 2144, y: 256 },
+            { type: "flying", x: 2400, y: 384 },
+            { type: "shooting", x: 2176, y: 416 }
         ]
     },
 
@@ -206,6 +214,8 @@ export const world1 = {
     {
         width: 100,
         height: 25,
+        isCave: false,
+        groundTileType: "G",
         spawn: { x: 64, y: 555 },
         goal: { x: 3040, y: 575 },
         map: [
@@ -237,16 +247,16 @@ export const world1 = {
         ],
         enemies: [
             { type: "walking", x: 1760, y: 608 },
-            { type: "walking", x: 960, y: 608 },
-            { type: "walking", x: 1376, y: 608 },
-            { type: "walking", x: 1984, y: 608 },
-            { type: "walking", x: 1376, y: 608 },
-            { type: "walking", x: 2336, y: 608 },
-            { type: "walking", x: 832, y: 608 },
-            { type: "flying", x: 1344, y: 320 },
-            { type: "flying", x: 2016, y: 352 },
-            { type: "flying", x: 2176, y: 256 },
-            { type: "shooting", x: 1952, y: 416 }
+            { type: "jumping", x: 1984, y: 608 },
+            { type: "jumping", x: 2336, y: 608 },
+            { type: "jumping", x: 832, y: 608 },
+            { type: "charger", x: 992, y: 608 },
+            { type: "charger", x: 2016, y: 608 },
+            { type: "jumping", x: 1088, y: 608 },
+            { type: "flying", x: 1952, y: 224 },
+            { type: "flying", x: 1120, y: 320 },
+            { type: "flying", x: 2048, y: 352 },
+            { type: "shooting", x: 2016, y: 448 }
         ]
     }
     ]

@@ -7,6 +7,7 @@ import { levelDefinitions } from './levelDefinitions.js';
 import { SaveGameManager } from './SaveGameManager.js';
 import { Logger } from './Logger.js';
 import { SoundManager } from './SoundManager.js';
+import { LevelEditor } from './LevelEditor.js';
 
 /**
  * Haupt-Game-Klasse - Verwaltet den gesamten Spielablauf
@@ -50,6 +51,9 @@ class Game {
         // Menü Navigation
         this.selectedLevelIndex = 0;
         this.menuKeyPressedLastFrame = {};
+        
+        // Level Editor
+        this.levelEditor = null;
         
         // UI Elemente
         this.setupUI();
@@ -114,6 +118,11 @@ class Game {
         
         document.getElementById('load-file-input').addEventListener('change', (e) => {
             this.loadGame(e.target.files[0]);
+        });
+        
+        // Sound Toggle Button
+        document.getElementById('toggle-sound-btn').addEventListener('click', () => {
+            this.toggleSound();
         });
         
         // Zurück-Button in Level-Auswahl
@@ -294,11 +303,16 @@ class Game {
         // Initialisiere Sound (bei erster User-Interaktion)
         this.soundManager.init();
         
+        // Setze Musik-Theme für aktuelle Welt (1-5)
+        const worldNumber = this.worldManager.currentWorldIndex + 1;
+        this.soundManager.setWorld(worldNumber);
+        
         // Starte Hintergrundmusik
         this.soundManager.playBackgroundMusic();
         
-        // Erstelle Level
-        this.currentLevel = new Level(levelData, this.assetManager);
+        // Erstelle Level mit Weltname
+        const world = this.worldManager.getWorld(this.worldManager.currentWorldIndex);
+        this.currentLevel = new Level(levelData, this.assetManager, world.name);
         
         // Erstelle/Reset Spieler
         const spawn = this.currentLevel.spawnPoint;
@@ -337,8 +351,18 @@ class Game {
     }
 
     gameLoop(currentTime) {
-        const deltaTime = currentTime - this.lastTime;
+        let deltaTime = currentTime - this.lastTime;
         this.lastTime = currentTime;
+        
+        // Capping: Begrenze deltaTime um extreme Schwankungen zu vermeiden
+        // Max 33ms = ~30 FPS minimum, verhindert große Sprünge bei Lag
+        if (deltaTime > 33) {
+            deltaTime = 33;
+        }
+        
+        // Normalisiere auf 60 FPS Target (16.67ms)
+        // Bei höheren Refresh-Rates (144Hz = ~7ms) wird die Bewegung entsprechend verlangsamt
+        deltaTime = Math.min(deltaTime, 16.67);
         
         this.update(deltaTime);
         this.render();
@@ -349,8 +373,8 @@ class Game {
     update(deltaTime) {
         if (this.gameState !== 'playing') return;
         
-        // Update Level (mit Player für ShootingEnemy)
-        this.currentLevel.update(this.player);
+        // Update Level (mit Player und deltaTime für frameRate-unabhängige Bewegung)
+        this.currentLevel.update(this.player, deltaTime);
         
         // Update Spieler mit deltaTime für frameRate-unabhängige Animation
         this.player.update(this.inputHandler, this.currentLevel, deltaTime);
@@ -396,6 +420,7 @@ class Game {
         if (!this.player.isAlive && this.gameState === 'playing') {
             console.log('Player is dead, handling death');
             this.gameState = 'dying'; // Verhindere mehrfaches Aufrufen
+            this.soundManager.stopBackgroundMusic();
             this.soundManager.playDeathSound();
             this.playerDied();
         }
@@ -505,6 +530,17 @@ class Game {
         
         this.showMainMenu();
     }
+    
+    toggleSound() {
+        const isMuted = this.soundManager.toggleMute();
+        const btn = document.getElementById('toggle-sound-btn');
+        
+        if (isMuted) {
+            btn.textContent = '🔇 Ton Aus';
+        } else {
+            btn.textContent = '🔊 Ton An';
+        }
+    }
 
     showMainMenu() {
         this.gameState = 'levelmenu';
@@ -522,6 +558,11 @@ class Game {
         const hasSave = this.saveGameManager.hasSave();
         document.getElementById('continue-game-btn').disabled = !hasSave;
         document.getElementById('save-game-btn').disabled = !hasSave;
+        
+        // Update Sound-Button Text
+        const isMuted = this.soundManager.getMuteStatus();
+        const soundBtn = document.getElementById('toggle-sound-btn');
+        soundBtn.textContent = isMuted ? '🔇 Ton Aus' : '🔊 Ton An';
         
         // Verstecke Canvas und HUD
         this.canvas.classList.add('hidden');
@@ -714,6 +755,39 @@ class Game {
                 document.body.removeChild(notification);
             }, 500);
         }, 2000);
+    }
+    
+    openLevelEditor() {
+        // Verstecke Hauptmenü
+        document.getElementById('main-menu').classList.add('hidden');
+        
+        // Zeige Canvas
+        this.canvas.classList.remove('hidden');
+        
+        // Erstelle Level Editor
+        this.levelEditor = new LevelEditor(this.canvas, this.assetManager);
+        this.levelEditor.onClose = () => {
+            this.closeLevelEditor();
+        };
+        
+        // Initiales Rendern
+        this.levelEditor.render();
+        
+        // Stoppe Game Loop falls aktiv
+        if (this.animationId) {
+            cancelAnimationFrame(this.animationId);
+            this.animationId = null;
+        }
+    }
+    
+    closeLevelEditor() {
+        this.levelEditor = null;
+        
+        // Verstecke Canvas
+        this.canvas.classList.add('hidden');
+        
+        // Zeige Hauptmenü
+        this.showMainMenu();
     }
 }
 

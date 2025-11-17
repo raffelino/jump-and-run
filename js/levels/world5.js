@@ -30,6 +30,8 @@ export const world5 = {
     {
         width: 100,
         height: 25,
+        isCave: false,
+        groundTileType: "c",
         spawn: { x: 64, y: 555 },
         goal: { x: 3040, y: 575 },
         map: [
@@ -53,17 +55,14 @@ export const world5 = {
             "................................................o.WW.o..............................................",
             "....................................................................................................",
             "....................................................................................................",
-            "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG......GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG",
-            "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG......GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG",
-            "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG......GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG",
-            "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG......GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG",
-            "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG......GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG"
+            "ccccccccccccccccccccccccccccccccccccccccccccccccc......ccccccccccccccccccccccccccccccccccccccccccccc",
+            "ccccccccccccccccccccccccccccccccccccccccccccccccc......ccccccccccccccccccccccccccccccccccccccccccccc",
+            "ccccccccccccccccccccccccccccccccccccccccccccccccc......ccccccccccccccccccccccccccccccccccccccccccccc",
+            "ccccccccccccccccccccccccccccccccccccccccccccccccc......ccccccccccccccccccccccccccccccccccccccccccccc",
+            "ccccccccccccccccccccccccccccccccccccccccccccccccc......ccccccccccccccccccccccccccccccccccccccccccccc"
         ],
         enemies: [
-            { type: "walking", x: 1440, y: 608 },
-            { type: "walking", x: 736, y: 608 },
-            { type: "walking", x: 736, y: 608 },
-            { type: "flying", x: 1856, y: 352 }
+            { type: "flying", x: 1632, y: 288 }
         ]
     },
 
@@ -71,6 +70,8 @@ export const world5 = {
     {
         width: 100,
         height: 25,
+        isCave: false,
+        groundTileType: "c",
         spawn: { x: 64, y: 555 },
         goal: { x: 3040, y: 575 },
         map: [
@@ -94,19 +95,16 @@ export const world5 = {
             "....................................................................................................",
             "...............................................................cccccccccc...........................",
             "....................................................................................................",
-            "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG...GGGGGLLLLLLLLLL........G.....GGGGGGGGGGGGGGGGGGGG",
-            "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG...GGGGGLLLLLLLLLL........G.....GGGGGGGGGGGGGGGGGGGG",
-            "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG...GGGGGLLLLLLLLLL........G.....GGGGGGGGGGGGGGGGGGGG",
-            "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG...GGGGGLLLLLLLLLL........G.....GGGGGGGGGGGGGGGGGGGG",
-            "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG...GGGGGGGGGGGGGGG........G.....GGGGGGGGGGGGGGGGGGGG"
+            "cccccccccccccccccccccccccccccccccccccccccccccccc...cccccLLLLLLLLLL........c.....cccccccccccccccccccc",
+            "cccccccccccccccccccccccccccccccccccccccccccccccc...cccccLLLLLLLLLL........c.....cccccccccccccccccccc",
+            "cccccccccccccccccccccccccccccccccccccccccccccccc...cccccLLLLLLLLLL........c.....cccccccccccccccccccc",
+            "cccccccccccccccccccccccccccccccccccccccccccccccc...cccccLLLLLLLLLL........c.....cccccccccccccccccccc",
+            "cccccccccccccccccccccccccccccccccccccccccccccccc...ccccccccccccccc........c.....cccccccccccccccccccc"
         ],
         enemies: [
-            { type: "walking", x: 1632, y: 608 },
-            { type: "walking", x: 864, y: 608 },
-            { type: "walking", x: 1728, y: 608 },
-            { type: "walking", x: 1952, y: 608 },
-            { type: "flying", x: 2368, y: 352 },
-            { type: "flying", x: 2304, y: 320 }
+            { type: "cloud", x: 1152, y: 670 },
+            { type: "flying", x: 992, y: 224 },
+            { type: "flying", x: 1888, y: 224 }
         ]
     },
 
@@ -114,6 +112,8 @@ export const world5 = {
     {
         width: 100,
         height: 25,
+        isCave: false,
+        groundTileType: "c",
         spawn: { x: 64, y: 555 },
         goal: { x: 3040, y: 575 },
         map: [
@@ -137,20 +137,16 @@ export const world5 = {
             "....................ccccccccc..........ccccccccccccccccc............................................",
             "....................................................................................................",
             "....................................................................................................",
-            "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGLLLLLLLLLLGGGG.......G......GGG...GGGGGGGG........GGGGGGGGGGGGGGGG",
-            "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGLLLLLLLLLLGGGG.......G......GGG...GGGGGGGG........GGGGGGGGGGGGGGGG",
-            "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGLLLLLLLLLLGGGG.......G......GGG...GGGGGGGG........GGGGGGGGGGGGGGGG",
-            "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG.......G......GGG...GGGGGGGG........GGGGGGGGGGGGGGGG",
-            "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG.......G......GGG...GGGGGGGG........GGGGGGGGGGGGGGGG"
+            "ccccccccccccccccccccccccccccccccccLLLLLLLLLLcccc.......c......ccc...cccccccc........cccccccccccccccc",
+            "ccccccccccccccccccccccccccccccccccLLLLLLLLLLcccc.......c......ccc...cccccccc........cccccccccccccccc",
+            "ccccccccccccccccccccccccccccccccccLLLLLLLLLLcccc.......c......ccc...cccccccc........cccccccccccccccc",
+            "cccccccccccccccccccccccccccccccccccccccccccccccc.......c......ccc...cccccccc........cccccccccccccccc",
+            "cccccccccccccccccccccccccccccccccccccccccccccccc.......c......ccc...cccccccc........cccccccccccccccc"
         ],
         enemies: [
-            { type: "walking", x: 2016, y: 608 },
-            { type: "walking", x: 768, y: 608 },
-            { type: "walking", x: 1216, y: 608 },
-            { type: "walking", x: 1216, y: 608 },
-            { type: "walking", x: 768, y: 608 },
-            { type: "flying", x: 1024, y: 256 },
-            { type: "flying", x: 2304, y: 288 }
+            { type: "cloud", x: 544, y: 670 },
+            { type: "flying", x: 1952, y: 288 },
+            { type: "flying", x: 1280, y: 352 }
         ]
     },
 
@@ -158,6 +154,8 @@ export const world5 = {
     {
         width: 100,
         height: 25,
+        isCave: false,
+        groundTileType: "c",
         spawn: { x: 64, y: 555 },
         goal: { x: 3040, y: 575 },
         map: [
@@ -181,22 +179,19 @@ export const world5 = {
             "......................ppppppp.........cccocWWWWco.IIIIIIIIIIII......................................",
             ".........................pppppp.................................................ccccc...............",
             "....................................................................................................",
-            "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG......GGG.....GGGGGGGGLLLLLLLGGGGGGG........GGGGGGGGGGGGGGGGGG",
-            "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG......GGG.....GGGGGGGGLLLLLLLGGGGGGG........GGGGGGGGGGGGGGGGGG",
-            "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG......GGG.....GGGGGGGGLLLLLLLGGGGGGG........GGGGGGGGGGGGGGGGGG",
-            "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG......GGG.....GGGGGGGGLLLLLLLGGGGGGG........GGGGGGGGGGGGGGGGGG",
-            "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG......GGG.....GGGGGGGGGGGGGGGGGGGGGG........GGGGGGGGGGGGGGGGGG"
+            "cccccccccccccccccccccccccccccccccccccc......ccc.....ccccccccLLLLLLLccccccc........cccccccccccccccccc",
+            "cccccccccccccccccccccccccccccccccccccc......ccc.....ccccccccLLLLLLLccccccc........cccccccccccccccccc",
+            "cccccccccccccccccccccccccccccccccccccc......ccc.....ccccccccLLLLLLLccccccc........cccccccccccccccccc",
+            "cccccccccccccccccccccccccccccccccccccc......ccc.....ccccccccLLLLLLLccccccc........cccccccccccccccccc",
+            "cccccccccccccccccccccccccccccccccccccc......ccc.....cccccccccccccccccccccc........cccccccccccccccccc"
         ],
         enemies: [
-            { type: "walking", x: 800, y: 608 },
-            { type: "walking", x: 1728, y: 608 },
-            { type: "walking", x: 1856, y: 608 },
-            { type: "walking", x: 864, y: 608 },
-            { type: "walking", x: 896, y: 608 },
-            { type: "walking", x: 640, y: 608 },
-            { type: "flying", x: 2368, y: 320 },
-            { type: "flying", x: 1280, y: 288 },
-            { type: "flying", x: 1376, y: 288 }
+            { type: "cloud", x: 480, y: 670 },
+            { type: "cloud", x: 384, y: 638 },
+            { type: "flying", x: 928, y: 288 },
+            { type: "flying", x: 1824, y: 224 },
+            { type: "flying", x: 992, y: 384 },
+            { type: "lightning", x: 1440, y: 448 }
         ]
     },
 
@@ -204,6 +199,8 @@ export const world5 = {
     {
         width: 100,
         height: 25,
+        isCave: false,
+        groundTileType: "c",
         spawn: { x: 64, y: 555 },
         goal: { x: 3040, y: 575 },
         map: [
@@ -234,16 +231,11 @@ export const world5 = {
             "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG.........GGGGGG...GGG......G.......GGGGGGGGGGGGGGGGG"
         ],
         enemies: [
-            { type: "walking", x: 1856, y: 608 },
-            { type: "walking", x: 768, y: 608 },
-            { type: "walking", x: 1504, y: 608 },
-            { type: "walking", x: 1280, y: 608 },
-            { type: "walking", x: 1344, y: 608 },
-            { type: "walking", x: 2272, y: 608 },
-            { type: "walking", x: 1312, y: 608 },
-            { type: "flying", x: 1760, y: 256 },
-            { type: "flying", x: 2336, y: 384 },
-            { type: "flying", x: 1888, y: 288 }
+            { type: "cloud", x: 2464, y: 414 },
+            { type: "cloud", x: 832, y: 542 },
+            { type: "flying", x: 1824, y: 384 },
+            { type: "flying", x: 2336, y: 224 },
+            { type: "flying", x: 1504, y: 320 }
         ]
     }
     ]

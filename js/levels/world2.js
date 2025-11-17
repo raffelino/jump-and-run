@@ -30,12 +30,14 @@ export const world2 = {
     {
         width: 100,
         height: 25,
+        isCave: true,
+        groundTileType: "S",
         spawn: { x: 64, y: 555 },
         goal: { x: 3040, y: 575 },
         map: [
-            "....................................................................................................",
-            "....................................................................................................",
-            "......................................................................o.............................",
+            "...............SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS...............",
+            "...............SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS...............",
+            "...............SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSoSSSSSSSSSSSSSS...............",
             "......................................................................o.............................",
             "......................................................................o.............................",
             "...............................o......................................o.............................",
@@ -53,17 +55,17 @@ export const world2 = {
             "....................................................................................................",
             "...................................................cccccccccc.......................................",
             "....................................................................................................",
-            "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG...GGGGG......GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG",
-            "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG...GGGGG......GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG",
-            "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG...GGGGG......GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG",
-            "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG...GGGGG......GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG",
-            "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG...GGGGG......GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG"
+            "SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS...SSSSS......SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS",
+            "SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS...SSSSS......SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS",
+            "SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS...SSSSS......SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS",
+            "SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS...SSSSS......SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS",
+            "SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS...SSSSS......SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS"
         ],
         enemies: [
             { type: "walking", x: 768, y: 608 },
-            { type: "walking", x: 1120, y: 608 },
-            { type: "walking", x: 2400, y: 608 },
-            { type: "flying", x: 1696, y: 224 }
+            { type: "jumping", x: 2400, y: 608 },
+            { type: "jumping", x: 2560, y: 608 },
+            { type: "bat", x: 2176, y: 256 }
         ]
     },
 
@@ -71,12 +73,14 @@ export const world2 = {
     {
         width: 100,
         height: 25,
+        isCave: true,
+        groundTileType: "S",
         spawn: { x: 64, y: 555 },
         goal: { x: 3040, y: 575 },
         map: [
-            "....................................................................................................",
-            "....................................................................................................",
-            "....................................................................................................",
+            "...............SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS...............",
+            "...............SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS...............",
+            "...............SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS...............",
             "....................................................................................................",
             "....................................................................................................",
             ".........................WW...........................o.....oooooo..................................",
@@ -94,19 +98,20 @@ export const world2 = {
             "....................................SSSSSS..........SSSSS...........................................",
             "...................................................................cccccccc.........................",
             "....................................................................................................",
-            "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGLLLLLLL.GGGGGGGLLLLLLLLLGGGGGGGGG.....G...GGGGGGGGGGGGGGGGGGGGGGGG",
-            "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGLLLLLLL.GGGGGGGLLLLLLLLLGGGGGGGGG.....G...GGGGGGGGGGGGGGGGGGGGGGGG",
-            "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG......GGGGGGGLLLLLLLLLGGGGGGGGG.....G...GGGGGGGGGGGGGGGGGGGGGGGG",
-            "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG......GGGGGGGLLLLLLLLLGGGGGGGGG.....G...GGGGGGGGGGGGGGGGGGGGGGGG",
-            "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG......GGGGGGGGGGGG....GGGGGGGGG.....G...GGGGGGGGGGGGGGGGGGGGGGGG"
+            "SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSLLLLLLL.SSSSSSSLLLLLLLLLSSSSSSSSS.....S...SSSSSSSSSSSSSSSSSSSSSSSS",
+            "SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSLLLLLLL.SSSSSSSLLLLLLLLLSSSSSSSSS.....S...SSSSSSSSSSSSSSSSSSSSSSSS",
+            "SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS......SSSSSSSLLLLLLLLLSSSSSSSSS.....S...SSSSSSSSSSSSSSSSSSSSSSSS",
+            "SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS......SSSSSSSLLLLLLLLLSSSSSSSSS.....S...SSSSSSSSSSSSSSSSSSSSSSSS",
+            "SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS......SSSSSSSSSSSS....SSSSSSSSS.....S...SSSSSSSSSSSSSSSSSSSSSSSS"
         ],
         enemies: [
-            { type: "walking", x: 1184, y: 608 },
-            { type: "walking", x: 1920, y: 608 },
+            { type: "jumping", x: 1920, y: 608 },
             { type: "walking", x: 1440, y: 608 },
-            { type: "walking", x: 992, y: 608 },
-            { type: "flying", x: 1312, y: 256 },
-            { type: "flying", x: 896, y: 384 }
+            { type: "walking", x: 2112, y: 608 },
+            { type: "jumping", x: 640, y: 608 },
+            { type: "stalactite", x: 1952, y: 96 },
+            { type: "bat", x: 1216, y: 256 },
+            { type: "flying", x: 1664, y: 352 }
         ]
     },
 
@@ -114,12 +119,14 @@ export const world2 = {
     {
         width: 100,
         height: 25,
+        isCave: true,
+        groundTileType: "S",
         spawn: { x: 64, y: 555 },
         goal: { x: 3040, y: 575 },
         map: [
-            "....................................................................................................",
-            "....................................................................................................",
-            "....................................................................................................",
+            "...............SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS...............",
+            "...............SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS...............",
+            "...............SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS...............",
             "....................................................................................................",
             "....................................WW..............................................................",
             "...................oooooo...........oW..............................................................",
@@ -137,20 +144,21 @@ export const world2 = {
             ".........................o.WWWW.o...................................................................",
             "................................................................ppppppp.........ccccc...............",
             "....................................................................................................",
-            "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG....GGGGGGGLLLLLLLL...GGGGGGGGGGGGGG......GGGGGGGGGGGGGGGGGGGGGGG",
-            "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG....GGGGGGGLLLLLLLL...GGGGGGGGGGGGGG......GGGGGGGGGGGGGGGGGGGGGGG",
-            "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG....GGGGGGGLLLLLLLL...GGGGGGGGGGGGGG......GGGGGGGGGGGGGGGGGGGGGGG",
-            "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG....GGGGGGGGGG........GGGGGGGGGGGGGG......GGGGGGGGGGGGGGGGGGGGGGG",
-            "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG....GGGGGGGGGG........GGGGGGGGGGGGGG......GGGGGGGGGGGGGGGGGGGGGGG"
+            "SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS....SSSSSSSLLLLLLLL...SSSSSSSSSSSSSS......SSSSSSSSSSSSSSSSSSSSSSS",
+            "SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS....SSSSSSSLLLLLLLL...SSSSSSSSSSSSSS......SSSSSSSSSSSSSSSSSSSSSSS",
+            "SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS....SSSSSSSLLLLLLLL...SSSSSSSSSSSSSS......SSSSSSSSSSSSSSSSSSSSSSS",
+            "SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS....SSSSSSSSSS........SSSSSSSSSSSSSS......SSSSSSSSSSSSSSSSSSSSSSS",
+            "SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS....SSSSSSSSSS........SSSSSSSSSSSSSS......SSSSSSSSSSSSSSSSSSSSSSS"
         ],
         enemies: [
-            { type: "walking", x: 1312, y: 608 },
-            { type: "walking", x: 2208, y: 608 },
-            { type: "walking", x: 1888, y: 608 },
+            { type: "jumping", x: 1312, y: 608 },
+            { type: "jumping", x: 2208, y: 608 },
             { type: "walking", x: 1920, y: 608 },
-            { type: "walking", x: 1280, y: 608 },
-            { type: "flying", x: 2304, y: 384 },
-            { type: "flying", x: 2112, y: 384 },
+            { type: "jumping", x: 1280, y: 608 },
+            { type: "jumping", x: 800, y: 608 },
+            { type: "stalactite", x: 1024, y: 96 },
+            { type: "bat", x: 1824, y: 288 },
+            { type: "flying", x: 1344, y: 224 },
             { type: "shooting", x: 2144, y: 448 }
         ]
     },
@@ -159,12 +167,14 @@ export const world2 = {
     {
         width: 100,
         height: 25,
+        isCave: true,
+        groundTileType: "S",
         spawn: { x: 64, y: 555 },
         goal: { x: 3040, y: 575 },
         map: [
-            "....................................................................................................",
-            "....................................................................................................",
-            "....................................................................................................",
+            "...............SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS...............",
+            "...............SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS...............",
+            "...............SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS...............",
             "....................................................................................................",
             "...................................................ooooooo..........................................",
             "..........................................oooooo...SSSSSSS..........................................",
@@ -182,23 +192,24 @@ export const world2 = {
             ".........................................IIIIIIIIIII...........o.WW.o........cccccccc...............",
             "....................................................................................................",
             "....................................................................................................",
-            "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGLLLLLLLL.GGGGGGGGGGLLLLLLLLG.........G.........GGGGGGGGGGGGGGGGGGGG",
-            "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGLLLLLLLL.GGGGGGGGGGLLLLLLLLG.........G.........GGGGGGGGGGGGGGGGGGGG",
-            "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGLLLLLLLL.GGGGGGGGGGLLLLLLLLG.........G.........GGGGGGGGGGGGGGGGGGGG",
-            "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG........GGGGGGGGGGGGGGGGGGG.........G.........GGGGGGGGGGGGGGGGGGGG",
-            "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG........GGGGGGGGGGGGGGGGGGG.........G.........GGGGGGGGGGGGGGGGGGGG"
+            "SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSLLLLLLLL.SSSSSSSSSSLLLLLLLLS.........S.........SSSSSSSSSSSSSSSSSSSS",
+            "SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSLLLLLLLL.SSSSSSSSSSLLLLLLLLS.........S.........SSSSSSSSSSSSSSSSSSSS",
+            "SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSLLLLLLLL.SSSSSSSSSSLLLLLLLLS.........S.........SSSSSSSSSSSSSSSSSSSS",
+            "SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS........SSSSSSSSSSSSSSSSSSS.........S.........SSSSSSSSSSSSSSSSSSSS",
+            "SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS........SSSSSSSSSSSSSSSSSSS.........S.........SSSSSSSSSSSSSSSSSSSS"
         ],
         enemies: [
-            { type: "walking", x: 1152, y: 608 },
             { type: "walking", x: 1440, y: 608 },
-            { type: "walking", x: 1472, y: 608 },
-            { type: "walking", x: 1728, y: 608 },
+            { type: "jumping", x: 1600, y: 608 },
+            { type: "walking", x: 896, y: 608 },
             { type: "walking", x: 1600, y: 608 },
-            { type: "walking", x: 1888, y: 608 },
-            { type: "flying", x: 1024, y: 320 },
-            { type: "flying", x: 1376, y: 288 },
-            { type: "flying", x: 1920, y: 288 },
-            { type: "shooting", x: 1536, y: 448 }
+            { type: "jumping", x: 1920, y: 608 },
+            { type: "jumping", x: 1568, y: 608 },
+            { type: "stalactite", x: 2080, y: 96 },
+            { type: "stalactite", x: 2208, y: 96 },
+            { type: "bat", x: 1472, y: 256 },
+            { type: "bat", x: 864, y: 224 },
+            { type: "bat", x: 896, y: 320 }
         ]
     },
 
@@ -206,12 +217,14 @@ export const world2 = {
     {
         width: 100,
         height: 25,
+        isCave: true,
+        groundTileType: "S",
         spawn: { x: 64, y: 555 },
         goal: { x: 3040, y: 575 },
         map: [
-            "....................................................................................................",
-            "....................................................................................................",
-            "........................o........................o..................................................",
+            "...............SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS...............",
+            "...............SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS...............",
+            "...............SSSSSSSSSoSSSSSSSSSSSSSSSSSSSSSSSSoSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS...............",
             "........................o..................o.....o................o.................................",
             "........................o..................o.....o................o.................................",
             "........................o..................oo....o................o.................................",
@@ -229,23 +242,26 @@ export const world2 = {
             ".................SSSS............SSSSS......pppppppp................................................",
             ".....................................ccccccccccc.........................ccccccccccc................",
             "....................................................................................................",
-            "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG......GGGGGGGGGGG............GLLLLLLLLL........GGGGGGGGGGGGGGGGGGG",
-            "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG......GGGGGGGGGGG............GLLLLLLLLL........GGGGGGGGGGGGGGGGGGG",
-            "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG......GGGGGGGGGGG............GLLLLLLLLL........GGGGGGGGGGGGGGGGGGG",
-            "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG......GGGGGGGGGGG............GLLLLLLLLL........GGGGGGGGGGGGGGGGGGG",
-            "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG......GGGGGGGGGGG............GGGGGGG...........GGGGGGGGGGGGGGGGGGG"
+            "SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS......SSSSSSSSSSS............SLLLLLLLLL........SSSSSSSSSSSSSSSSSSS",
+            "SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS......SSSSSSSSSSS............SLLLLLLLLL........SSSSSSSSSSSSSSSSSSS",
+            "SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS......SSSSSSSSSSS............SLLLLLLLLL........SSSSSSSSSSSSSSSSSSS",
+            "SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS......SSSSSSSSSSS............SLLLLLLLLL........SSSSSSSSSSSSSSSSSSS",
+            "SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS......SSSSSSSSSSS............SSSSSSS...........SSSSSSSSSSSSSSSSSSS"
         ],
         enemies: [
             { type: "walking", x: 1472, y: 608 },
-            { type: "walking", x: 1536, y: 608 },
             { type: "walking", x: 736, y: 608 },
-            { type: "walking", x: 1568, y: 608 },
-            { type: "walking", x: 2016, y: 608 },
-            { type: "walking", x: 1280, y: 608 },
-            { type: "walking", x: 2176, y: 608 },
-            { type: "flying", x: 2272, y: 224 },
-            { type: "flying", x: 2016, y: 320 },
-            { type: "flying", x: 1824, y: 224 }
+            { type: "jumping", x: 1568, y: 608 },
+            { type: "jumping", x: 1280, y: 608 },
+            { type: "jumping", x: 1568, y: 608 },
+            { type: "jumping", x: 928, y: 608 },
+            { type: "jumping", x: 896, y: 608 },
+            { type: "stalactite", x: 1440, y: 96 },
+            { type: "stalactite", x: 2048, y: 96 },
+            { type: "flying", x: 1536, y: 256 },
+            { type: "bat", x: 2336, y: 224 },
+            { type: "flying", x: 2112, y: 352 },
+            { type: "shooting", x: 1504, y: 512 }
         ]
     }
     ]
