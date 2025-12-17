@@ -124,6 +124,8 @@ export class Player {
                 // Wenn auf Plattform: durch die Plattform fallen lassen
                 if (this.isOnPlatform) {
                     this.dropThroughPlatform = true;
+                    // Speichere die Y-Position der Plattform (Füße des Spielers)
+                    this.dropThroughY = this.y + this.height;
                     this.isOnGround = false;
                     this.velocityY = 1; // Kleiner Push nach unten
                 } else {
@@ -441,10 +443,18 @@ export class Player {
                     if (tile.platformOnly) {
                         this.logger.log(`  -> Platform detected! velocityY: ${this.velocityY}`);
                         
-                        // Wenn dropThroughPlatform aktiv: Plattform komplett ignorieren
+                        // Wenn dropThroughPlatform aktiv: Prüfe ob wir die ursprüngliche Plattform passiert haben
                         if (this.dropThroughPlatform) {
-                            this.logger.log(`  -> Dropping through platform!`);
-                            continue;
+                            const tileTop = row * tileSize;
+                            const tileBottom = tileTop + tileSize;
+                            // Wenn unsere Füße unterhalb der ursprünglichen Plattform sind, deaktiviere drop-through
+                            if (this.y > this.dropThroughY) {
+                                this.dropThroughPlatform = false;
+                                this.logger.log(`  -> Passed through platform, re-enabling collision`);
+                            } else {
+                                this.logger.log(`  -> Dropping through platform!`);
+                                continue;
+                            }
                         }
                         
                         // Nur kollidieren wenn Spieler von oben kommt
@@ -494,9 +504,15 @@ export class Player {
             for (let col = leftTile; col <= rightTile; col++) {
                 const tile = level.getTile(col, checkBottomRow);
                 
-                // Skip Plattformen wenn wir durchfallen wollen
+                // Skip Plattformen wenn wir durchfallen wollen und noch nicht durch sind
                 if (tile && tile.platformOnly && this.dropThroughPlatform) {
-                    continue;
+                    // Prüfe ob wir die ursprüngliche Plattform schon passiert haben
+                    if (this.y > this.dropThroughY) {
+                        this.dropThroughPlatform = false;
+                        // Nicht skippen - auf dieser Plattform können wir landen
+                    } else {
+                        continue;
+                    }
                 }
                 
                 if (tile && tile.solid) {
@@ -1071,6 +1087,7 @@ export class Player {
         this.iceSlideVelocity = 0;
         this.isOnIce = false;
         this.dropThroughPlatform = false;
+        this.dropThroughY = 0;
         this.isOnPlatform = false;
     }
 
