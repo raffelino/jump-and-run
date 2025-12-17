@@ -30,6 +30,8 @@ export class Player {
         this.isAlive = true;
         this.isDying = false;
         this.isCrouching = false; // Ducken-Status
+        this.dropThroughPlatform = false; // Durch Plattformen fallen wenn geduckt
+        this.isOnPlatform = false; // Ob Spieler auf einer Plattform steht
         
         // Rutsch-Mechanik für Eis
         this.iceSlideVelocity = 0; // Aktuelle Rutsch-Geschwindigkeit auf Eis
@@ -119,21 +121,28 @@ export class Player {
             }
         } else if (wantsToCrouch) {
             if (!this.isCrouching && this.isOnGround) {
-                // Start crouch transition
-                if (!this.crouchTransition.active) {
-                    console.log(`Crouch input detected: wantsToCrouch=${wantsToCrouch}, isOnGround=${this.isOnGround}`);
-                    // Fußposition berechnen (muss konstant bleiben)
-                    const footY = this.y + this.height;
-                    this.crouchTransition.active = true;
-                    this.crouchTransition.elapsed = 0;
-                    this.crouchTransition.footY = footY; // Speichere Fußposition
-                    this.crouchTransition.startHeight = this.normalHeight;
-                    this.crouchTransition.targetHeight = this.crouchHeight;
-                    this.crouchTransition.onComplete = () => {
-                        this.isCrouching = true;
-                        this.height = this.crouchHeight;
-                        this.y = footY - this.crouchHeight;
-                    };
+                // Wenn auf Plattform: durch die Plattform fallen lassen
+                if (this.isOnPlatform) {
+                    this.dropThroughPlatform = true;
+                    this.isOnGround = false;
+                    this.velocityY = 1; // Kleiner Push nach unten
+                } else {
+                    // Start crouch transition (nur auf solidem Boden)
+                    if (!this.crouchTransition.active) {
+                        console.log(`Crouch input detected: wantsToCrouch=${wantsToCrouch}, isOnGround=${this.isOnGround}`);
+                        // Fußposition berechnen (muss konstant bleiben)
+                        const footY = this.y + this.height;
+                        this.crouchTransition.active = true;
+                        this.crouchTransition.elapsed = 0;
+                        this.crouchTransition.footY = footY; // Speichere Fußposition
+                        this.crouchTransition.startHeight = this.normalHeight;
+                        this.crouchTransition.targetHeight = this.crouchHeight;
+                        this.crouchTransition.onComplete = () => {
+                            this.isCrouching = true;
+                            this.height = this.crouchHeight;
+                            this.y = footY - this.crouchHeight;
+                        };
+                    }
                 }
             }
         }
@@ -431,6 +440,13 @@ export class Player {
                     // Plattformen (platformOnly) sind nur von oben begehbar
                     if (tile.platformOnly) {
                         this.logger.log(`  -> Platform detected! velocityY: ${this.velocityY}`);
+                        
+                        // Wenn dropThroughPlatform aktiv: Plattform komplett ignorieren
+                        if (this.dropThroughPlatform) {
+                            this.logger.log(`  -> Dropping through platform!`);
+                            continue;
+                        }
+                        
                         // Nur kollidieren wenn Spieler von oben kommt
                         // Verwende movementDelta (tatsächliche Verschiebung) statt raw velocity
                         if (movementDelta > 0) {
@@ -471,11 +487,18 @@ export class Player {
 
         // Prüfe ob Spieler auf dem Boden steht
         // Wichtig: Nur prüfen wenn KEINE Kollision gefunden wurde (sonst wird Position doppelt gesetzt)
+        this.isOnPlatform = false; // Reset vor der Prüfung
         if (!collisionFound) {
             // Prüfe den Tile direkt UNTER dem Spieler (für isOnGround)
             const checkBottomRow = bottomTile + 1;
             for (let col = leftTile; col <= rightTile; col++) {
                 const tile = level.getTile(col, checkBottomRow);
+                
+                // Skip Plattformen wenn wir durchfallen wollen
+                if (tile && tile.platformOnly && this.dropThroughPlatform) {
+                    continue;
+                }
+                
                 if (tile && tile.solid) {
                     // Prüfe ob Spieler genau auf diesem Tile steht
                     const playerBottom = this.y + this.height;
@@ -488,6 +511,13 @@ export class Player {
                     // sonst würde ein kleiner negativer movementDelta (Aufwärtsbewegung) zu
                     // einem fälschlichen Snap auf den Boden führen und Sprünge neutralisieren.
                     if (movementDelta >= 0 && distance <= tolerance) {
+                        // Merke ob wir auf einer Plattform stehen
+                        if (tile.platformOnly) {
+                            this.isOnPlatform = true;
+                        } else {
+                            // Auf festem Boden gelandet - dropThroughPlatform zurücksetzen
+                            this.dropThroughPlatform = false;
+                        }
                         wasOnGround = true;
                         // WICHTIG: Korrigiere Position auf exakt den Boden
                         this.y = tileTop - this.height;
@@ -1040,6 +1070,8 @@ export class Player {
         this.animationState = 'idle';
         this.iceSlideVelocity = 0;
         this.isOnIce = false;
+        this.dropThroughPlatform = false;
+        this.isOnPlatform = false;
     }
 
     checkIfOnIce(level) {
