@@ -2,7 +2,9 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <title>Kathis Adventure</title>
     <link rel="stylesheet" href="styles.css">
 </head>
@@ -23,6 +25,19 @@
             </div>
         </div>
         <canvas id="gameCanvas" width="800" height="600" class="hidden"></canvas>
+        
+        <!-- Touch Controls -->
+        <div id="touch-controls" class="hidden">
+            <div id="touch-left-area">
+                <button id="touch-left" class="touch-btn">◀</button>
+                <button id="touch-right" class="touch-btn">▶</button>
+            </div>
+            <div id="touch-right-area">
+                <button id="touch-jump" class="touch-btn touch-btn-large">⬆</button>
+                <button id="touch-crouch" class="touch-btn">⬇</button>
+                <button id="touch-throw" class="touch-btn touch-btn-small">🍎</button>
+            </div>
+        </div>
         
         <!-- Hauptmenü -->
         <div id="main-menu" class="menu-screen">

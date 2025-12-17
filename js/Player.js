@@ -99,9 +99,9 @@ export class Player {
             console.log(`State: isOnGround=${this.isOnGround}, isCrouching=${this.isCrouching}, height=${this.height}`);
         }
         
-        // Ducken-Status prüfen (Pfeil nach unten oder S-Taste)
-        const wantsToCrouch = inputHandler.isPressed('ArrowDown') || inputHandler.isPressed('s');
-        const wantsToStandUp = inputHandler.isPressed('ArrowUp') || inputHandler.isPressed('w');
+        // Ducken-Status prüfen (nutze InputHandler Methoden für Touch-Support)
+        const wantsToCrouch = inputHandler.isCrouchPressed();
+        const wantsToStandUp = inputHandler.isJumpPressed();
         
         
         // ----- Crouch / Stand handling with smooth transition -----
@@ -278,9 +278,9 @@ export class Player {
             this.die();
         }
 
-        // Apfel werfen (E-Taste oder F-Taste)
+        // Apfel werfen (E-Taste, F-Taste oder Touch)
         this.appleCooldown = Math.max(0, this.appleCooldown - deltaTime);
-        const throwPressed = inputHandler.isPressed('e') || inputHandler.isPressed('f');
+        const throwPressed = inputHandler.isThrowPressed();
         
         if (throwPressed && !this.throwKeyPressed && this.appleCooldown <= 0 && !this.isCrouching) {
             if (this.apples.filter(a => a.active).length < this.maxApples) {

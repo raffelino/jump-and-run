@@ -24,12 +24,21 @@ class Game {
         this.canvas = document.getElementById('gameCanvas');
         this.ctx = this.canvas.getContext('2d');
         
+        // Canvas Basis-Größe (interne Auflösung)
+        this.baseWidth = 800;
+        this.baseHeight = 600;
+        this.canvas.width = this.baseWidth;
+        this.canvas.height = this.baseHeight;
+        
         // Initialisierung
         this.inputHandler = new InputHandler();
         this.assetManager = new AssetManager();
         this.assetManager.generatePlaceholderSprites();
         this.saveGameManager = new SaveGameManager();
         this.soundManager = new SoundManager();
+        
+        // Responsive Canvas Setup
+        this.setupResponsiveCanvas();
         
         // Welten-Manager mit 5 Leveln pro Welt
         this.worldManager = new WorldManager(5);
@@ -102,6 +111,42 @@ class Game {
             levelDefinitions.world5.name,
             levelDefinitions.world5.levels
         );
+    }
+    
+    setupResponsiveCanvas() {
+        // Resize Handler
+        const resizeCanvas = () => {
+            const container = document.getElementById('game-container');
+            const containerWidth = container.clientWidth;
+            const containerHeight = container.clientHeight;
+            
+            // Behalte das Seitenverhältnis bei
+            const aspectRatio = this.baseWidth / this.baseHeight;
+            let displayWidth = containerWidth;
+            let displayHeight = containerWidth / aspectRatio;
+            
+            if (displayHeight > containerHeight) {
+                displayHeight = containerHeight;
+                displayWidth = containerHeight * aspectRatio;
+            }
+            
+            // Canvas-Anzeigegröße setzen (CSS)
+            this.canvas.style.width = `${displayWidth}px`;
+            this.canvas.style.height = `${displayHeight}px`;
+            
+            // Zentrieren
+            this.canvas.style.marginLeft = `${(containerWidth - displayWidth) / 2}px`;
+            this.canvas.style.marginTop = `${(containerHeight - displayHeight) / 2}px`;
+            
+            this.logger.log(`Canvas resized to ${displayWidth}x${displayHeight}`);
+        };
+        
+        // Initial und bei Resize aufrufen
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+        window.addEventListener('orientationchange', () => {
+            setTimeout(resizeCanvas, 100);
+        });
     }
 
     setupUI() {
@@ -339,6 +384,9 @@ class Game {
         this.canvas.classList.remove('hidden');
         document.getElementById('hud').style.display = 'flex';
         
+        // Zeige Touch-Controls auf Touch-Geräten
+        this.inputHandler.showTouchControls();
+        
         // Verstecke Menüs
         document.getElementById('level-menu').classList.add('hidden');
         document.getElementById('main-menu').classList.add('hidden');
@@ -537,6 +585,9 @@ class Game {
         // Stoppe Musik
         this.soundManager.stopBackgroundMusic();
         
+        // Verstecke Touch-Controls
+        this.inputHandler.hideTouchControls();
+        
         // Zurück zum Menü nach kurzer Verzögerung
         setTimeout(() => {
             alert('Game Over - Keine Leben mehr!');
@@ -590,9 +641,10 @@ class Game {
         const soundBtn = document.getElementById('toggle-sound-btn');
         soundBtn.textContent = isMuted ? '🔇 Ton Aus' : '🔊 Ton An';
         
-        // Verstecke Canvas und HUD
+        // Verstecke Canvas, HUD und Touch-Controls
         this.canvas.classList.add('hidden');
         document.getElementById('hud').style.display = 'none';
+        this.inputHandler.hideTouchControls();
         
         // Zeige Hauptmenü, verstecke Rest
         document.getElementById('main-menu').classList.remove('hidden');
@@ -617,9 +669,10 @@ class Game {
         this.updateHUD();
         this.updateMenuStats();
         
-        // Verstecke Canvas und HUD
+        // Verstecke Canvas, HUD und Touch-Controls
         this.canvas.classList.add('hidden');
         document.getElementById('hud').style.display = 'none';
+        this.inputHandler.hideTouchControls();
         
         // Zeige Level-Menü, verstecke Rest
         document.getElementById('level-menu').classList.remove('hidden');
