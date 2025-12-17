@@ -21,6 +21,8 @@ export class Enemy {
 
     checkCollision(player) {
         if (!this.active) return false;
+        // Keine Kollision wenn Gegner stirbt (Death Animation läuft)
+        if (this.isDying) return false;
         
         const playerBounds = player.getBounds();
         return (
@@ -411,6 +413,7 @@ export class Fireball {
 
     checkCollision(player) {
         if (!this.active) return false;
+        if (this.isDying) return false;
         
         const playerBounds = player.getBounds();
         return (
