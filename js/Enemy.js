@@ -308,9 +308,38 @@ export class FlyingEnemy extends Enemy {
         this.speed = 1.2;
         this.direction = 1; // 1 = runter, -1 = hoch
         this.amplitude = 6 * 32; // 6 Tiles
+        
+        // Death Animation
+        this.isDying = false;
+        this.deathTimer = 0;
+        this.deathDuration = 500;
+        this.deathRotation = 0;
+        this.deathOpacity = 1;
+        this.deathVelocityY = -5;
+        this.deathY = y;
+    }
+
+    die() {
+        if (!this.isDying) {
+            this.isDying = true;
+            this.deathTimer = 0;
+            this.deathY = this.y;
+        }
     }
 
     update(level) {
+        if (this.isDying) {
+            this.deathTimer += 16;
+            const progress = Math.min(this.deathTimer / this.deathDuration, 1);
+            this.deathRotation = progress * Math.PI * 4;
+            this.deathOpacity = 1 - progress;
+            this.deathVelocityY += 0.3;
+            this.deathY += this.deathVelocityY;
+            if (progress >= 1) {
+                this.active = false;
+            }
+            return;
+        }
         if (!this.active) return;
 
         // Bewege vertikal
@@ -327,11 +356,52 @@ export class FlyingEnemy extends Enemy {
     }
 
     draw(ctx, camera) {
-        if (!this.active) return;
+        if (!this.active && !this.isDying) return;
 
         ctx.save();
         const screenX = this.x - camera.x;
-        const screenY = this.y - camera.y;
+        const screenY = (this.isDying ? this.deathY : this.y) - camera.y;
+
+        if (this.isDying) {
+            ctx.globalAlpha = this.deathOpacity;
+            const centerX = screenX + this.width / 2;
+            const centerY = screenY + this.height / 2;
+            ctx.translate(centerX, centerY);
+            ctx.rotate(this.deathRotation);
+            
+            // Zeichne rotierenden Geist
+            ctx.fillStyle = '#9933FF';
+            ctx.beginPath();
+            ctx.arc(0, -4, 14, Math.PI, 0, false);
+            ctx.lineTo(14, 12);
+            ctx.lineTo(8, 16);
+            ctx.lineTo(2, 12);
+            ctx.lineTo(-4, 16);
+            ctx.lineTo(-10, 12);
+            ctx.lineTo(-14, 16);
+            ctx.lineTo(-14, -4);
+            ctx.closePath();
+            ctx.fill();
+            
+            // X-Augen
+            ctx.strokeStyle = '#FFFFFF';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(-8, -2);
+            ctx.lineTo(-4, 2);
+            ctx.moveTo(-4, -2);
+            ctx.lineTo(-8, 2);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(4, -2);
+            ctx.lineTo(8, 2);
+            ctx.moveTo(8, -2);
+            ctx.lineTo(4, 2);
+            ctx.stroke();
+            
+            ctx.restore();
+            return;
+        }
 
         // Zeichne fliegenden Gegner als lila Geist
         ctx.fillStyle = '#9933FF';
@@ -466,9 +536,39 @@ export class ShootingEnemy extends Enemy {
         this.shootInterval = 240; // Schießt alle 4 Sekunden (bei 60fps)
         this.fireballs = [];
         this.detectionRange = 400; // Pixel
+        
+        // Death Animation
+        this.isDying = false;
+        this.deathTimer = 0;
+        this.deathDuration = 500;
+        this.deathRotation = 0;
+        this.deathOpacity = 1;
+        this.deathVelocityY = -5;
+        this.deathY = y;
+    }
+
+    die() {
+        if (!this.isDying) {
+            this.isDying = true;
+            this.deathTimer = 0;
+            this.deathY = this.y;
+            this.fireballs = []; // Entferne alle Feuerbälle
+        }
     }
 
     update(level, player) {
+        if (this.isDying) {
+            this.deathTimer += 16;
+            const progress = Math.min(this.deathTimer / this.deathDuration, 1);
+            this.deathRotation = progress * Math.PI * 4;
+            this.deathOpacity = 1 - progress;
+            this.deathVelocityY += 0.3;
+            this.deathY += this.deathVelocityY;
+            if (progress >= 1) {
+                this.active = false;
+            }
+            return;
+        }
         if (!this.active) return;
 
         // Update Feuerbälle
@@ -508,11 +608,45 @@ export class ShootingEnemy extends Enemy {
     }
 
     draw(ctx, camera) {
-        if (!this.active) return;
+        if (!this.active && !this.isDying) return;
 
         ctx.save();
         const screenX = this.x - camera.x;
-        const screenY = this.y - camera.y;
+        const screenY = (this.isDying ? this.deathY : this.y) - camera.y;
+
+        if (this.isDying) {
+            ctx.globalAlpha = this.deathOpacity;
+            const centerX = screenX + this.width / 2;
+            const centerY = screenY + this.height / 2;
+            ctx.translate(centerX, centerY);
+            ctx.rotate(this.deathRotation);
+            
+            // Zeichne rotierenden Turm
+            ctx.fillStyle = '#FF8800';
+            ctx.beginPath();
+            ctx.moveTo(-12, 16);
+            ctx.lineTo(12, 16);
+            ctx.lineTo(8, 0);
+            ctx.lineTo(-8, 0);
+            ctx.closePath();
+            ctx.fill();
+            
+            ctx.fillStyle = '#FF6600';
+            ctx.fillRect(-6, -8, 12, 8);
+            
+            // X-Augen
+            ctx.strokeStyle = '#FFFFFF';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(-4, 2);
+            ctx.lineTo(4, 8);
+            ctx.moveTo(4, 2);
+            ctx.lineTo(-4, 8);
+            ctx.stroke();
+            
+            ctx.restore();
+            return;
+        }
 
         // Zeichne Turm-Gegner in Orange
         ctx.fillStyle = '#FF8800';
@@ -563,9 +697,38 @@ export class JumpingEnemy extends Enemy {
         this.isOnGround = true;
         this.direction = 1; // Für horizontale Bewegung beim Springen
         this.speed = 1;
+        
+        // Death Animation
+        this.isDying = false;
+        this.deathTimer = 0;
+        this.deathDuration = 500;
+        this.deathRotation = 0;
+        this.deathOpacity = 1;
+        this.deathVelocityY = -8;
+        this.deathY = y;
+    }
+
+    die() {
+        if (!this.isDying) {
+            this.isDying = true;
+            this.deathTimer = 0;
+            this.deathY = this.y;
+        }
     }
 
     update(level) {
+        if (this.isDying) {
+            this.deathTimer += 16;
+            const progress = Math.min(this.deathTimer / this.deathDuration, 1);
+            this.deathRotation = progress * Math.PI * 4;
+            this.deathOpacity = 1 - progress;
+            this.deathVelocityY += 0.3;
+            this.deathY += this.deathVelocityY;
+            if (progress >= 1) {
+                this.active = false;
+            }
+            return;
+        }
         if (!this.active) return;
 
         // Jump Timer
@@ -622,12 +785,48 @@ export class JumpingEnemy extends Enemy {
     }
 
     draw(ctx, camera) {
-        if (!this.active) return;
+        if (!this.active && !this.isDying) return;
 
         const screenX = this.x - camera.x;
-        const screenY = this.y - camera.y;
+        const screenY = (this.isDying ? this.deathY : this.y) - camera.y;
 
         ctx.save();
+        
+        if (this.isDying) {
+            ctx.globalAlpha = this.deathOpacity;
+            const centerX = screenX + this.width / 2;
+            const centerY = screenY + this.height / 2;
+            ctx.translate(centerX, centerY);
+            ctx.rotate(this.deathRotation);
+            
+            // Zeichne rotierenden Frosch
+            ctx.fillStyle = '#7CFC00';
+            ctx.beginPath();
+            ctx.ellipse(0, 4, 14, 10, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(0, -4, 11, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // X-Augen
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(-7, -8);
+            ctx.lineTo(-3, -4);
+            ctx.moveTo(-3, -8);
+            ctx.lineTo(-7, -4);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(3, -8);
+            ctx.lineTo(7, -4);
+            ctx.moveTo(7, -8);
+            ctx.lineTo(3, -4);
+            ctx.stroke();
+            
+            ctx.restore();
+            return;
+        }
         
         // Frosch-Körper (abgerundete Form)
         ctx.fillStyle = '#7CFC00'; // Helleres Grün (Lawn Green)
@@ -712,9 +911,38 @@ export class ChargerEnemy extends Enemy {
         this.detectionRange = 160; // 5 Tiles
         this.chargeCooldown = 0;
         this.chargeCooldownMax = 180; // 3 Sekunden Pause nach Charge
+        
+        // Death Animation
+        this.isDying = false;
+        this.deathTimer = 0;
+        this.deathDuration = 500;
+        this.deathRotation = 0;
+        this.deathOpacity = 1;
+        this.deathVelocityY = -5;
+        this.deathY = y;
+    }
+
+    die() {
+        if (!this.isDying) {
+            this.isDying = true;
+            this.deathTimer = 0;
+            this.deathY = this.y;
+        }
     }
 
     update(level, player) {
+        if (this.isDying) {
+            this.deathTimer += 16;
+            const progress = Math.min(this.deathTimer / this.deathDuration, 1);
+            this.deathRotation = progress * Math.PI * 4;
+            this.deathOpacity = 1 - progress;
+            this.deathVelocityY += 0.3;
+            this.deathY += this.deathVelocityY;
+            if (progress >= 1) {
+                this.active = false;
+            }
+            return;
+        }
         if (!this.active) return;
 
         // Cooldown
@@ -769,12 +997,43 @@ export class ChargerEnemy extends Enemy {
     }
 
     draw(ctx, camera) {
-        if (!this.active) return;
+        if (!this.active && !this.isDying) return;
 
         const screenX = this.x - camera.x;
-        const screenY = this.y - camera.y;
+        const screenY = (this.isDying ? this.deathY : this.y) - camera.y;
 
         ctx.save();
+        
+        if (this.isDying) {
+            ctx.globalAlpha = this.deathOpacity;
+            const centerX = screenX + this.width / 2;
+            const centerY = screenY + this.height / 2;
+            ctx.translate(centerX, centerY);
+            ctx.rotate(this.deathRotation);
+            
+            // Zeichne rotierenden Charger
+            ctx.fillStyle = '#8B4513';
+            ctx.fillRect(-16, -16, 32, 32);
+            
+            // X-Augen
+            ctx.strokeStyle = '#FFFFFF';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(-8, -4);
+            ctx.lineTo(-2, 2);
+            ctx.moveTo(-2, -4);
+            ctx.lineTo(-8, 2);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(2, -4);
+            ctx.lineTo(8, 2);
+            ctx.moveTo(8, -4);
+            ctx.lineTo(2, 2);
+            ctx.stroke();
+            
+            ctx.restore();
+            return;
+        }
         
         // Farbe ändert sich beim Charging
         ctx.fillStyle = this.isCharging ? '#FF4500' : '#8B4513';
@@ -896,9 +1155,38 @@ export class BatEnemy extends Enemy {
         this.time = 0;
         this.baseY = y;
         this.wingFlap = 0;
+        
+        // Death Animation
+        this.isDying = false;
+        this.deathTimer = 0;
+        this.deathDuration = 500;
+        this.deathRotation = 0;
+        this.deathOpacity = 1;
+        this.deathVelocityY = -5;
+        this.deathY = y;
+    }
+
+    die() {
+        if (!this.isDying) {
+            this.isDying = true;
+            this.deathTimer = 0;
+            this.deathY = this.y;
+        }
     }
 
     update(level) {
+        if (this.isDying) {
+            this.deathTimer += 16;
+            const progress = Math.min(this.deathTimer / this.deathDuration, 1);
+            this.deathRotation = progress * Math.PI * 4;
+            this.deathOpacity = 1 - progress;
+            this.deathVelocityY += 0.3;
+            this.deathY += this.deathVelocityY;
+            if (progress >= 1) {
+                this.active = false;
+            }
+            return;
+        }
         if (!this.active) return;
 
         // Horizontale Bewegung
@@ -918,12 +1206,43 @@ export class BatEnemy extends Enemy {
     }
 
     draw(ctx, camera) {
-        if (!this.active) return;
+        if (!this.active && !this.isDying) return;
 
         const screenX = this.x - camera.x;
-        const screenY = this.y - camera.y;
+        const screenY = (this.isDying ? this.deathY : this.y) - camera.y;
 
         ctx.save();
+        
+        if (this.isDying) {
+            ctx.globalAlpha = this.deathOpacity;
+            const centerX = screenX + this.width / 2;
+            const centerY = screenY + this.height / 2;
+            ctx.translate(centerX, centerY);
+            ctx.rotate(this.deathRotation);
+            
+            // Zeichne rotierende Fledermaus
+            ctx.fillStyle = '#4B0082';
+            ctx.fillRect(-4, -6, 8, 8);
+            
+            // X-Augen
+            ctx.strokeStyle = '#FFFFFF';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(-3, -3);
+            ctx.lineTo(0, 0);
+            ctx.moveTo(0, -3);
+            ctx.lineTo(-3, 0);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(0, -3);
+            ctx.lineTo(3, 0);
+            ctx.moveTo(3, -3);
+            ctx.lineTo(0, 0);
+            ctx.stroke();
+            
+            ctx.restore();
+            return;
+        }
         
         // Körper
         ctx.fillStyle = '#4B0082';
@@ -965,9 +1284,39 @@ export class FireElemental extends Enemy {
         this.trailSpawnTimer = 0;
         this.trailSpawnInterval = 20; // Alle 20 frames neue Flamme
         this.flickerOffset = Math.random() * Math.PI * 2;
+        
+        // Death Animation
+        this.isDying = false;
+        this.deathTimer = 0;
+        this.deathDuration = 500;
+        this.deathRotation = 0;
+        this.deathOpacity = 1;
+        this.deathVelocityY = -5;
+        this.deathY = y;
+    }
+
+    die() {
+        if (!this.isDying) {
+            this.isDying = true;
+            this.deathTimer = 0;
+            this.deathY = this.y;
+            this.fireTrail = []; // Lösche Feuerspur
+        }
     }
 
     update(level) {
+        if (this.isDying) {
+            this.deathTimer += 16;
+            const progress = Math.min(this.deathTimer / this.deathDuration, 1);
+            this.deathRotation = progress * Math.PI * 4;
+            this.deathOpacity = 1 - progress;
+            this.deathVelocityY += 0.3;
+            this.deathY += this.deathVelocityY;
+            if (progress >= 1) {
+                this.active = false;
+            }
+            return;
+        }
         if (!this.active) return;
 
         // Bewegung
@@ -1032,34 +1381,71 @@ export class FireElemental extends Enemy {
     }
 
     draw(ctx, camera) {
-        if (!this.active) return;
+        if (!this.active && !this.isDying) return;
 
         const screenX = this.x - camera.x;
-        const screenY = this.y - camera.y;
+        const screenY = (this.isDying ? this.deathY : this.y) - camera.y;
 
-        // Zeichne Feuer-Spur
-        this.fireTrail.forEach(fire => {
-            const fireX = fire.x - camera.x;
-            const fireY = fire.y - camera.y;
-            const alpha = 1 - (fire.timer / fire.maxLife);
-            
-            ctx.save();
-            ctx.globalAlpha = alpha;
-            
-            // Flackernde Flamme
-            const flicker = Math.sin(fire.timer * 0.3) * 2;
-            ctx.fillStyle = '#FF4500';
-            ctx.fillRect(fireX, fireY + flicker, 16, 16);
-            ctx.fillStyle = '#FFA500';
-            ctx.fillRect(fireX + 4, fireY + 4 + flicker, 8, 8);
-            ctx.fillStyle = '#FFFF00';
-            ctx.fillRect(fireX + 6, fireY + 6 + flicker, 4, 4);
-            
-            ctx.restore();
-        });
+        // Zeichne Feuer-Spur (nur wenn nicht sterbend)
+        if (!this.isDying) {
+            this.fireTrail.forEach(fire => {
+                const fireX = fire.x - camera.x;
+                const fireY = fire.y - camera.y;
+                const alpha = 1 - (fire.timer / fire.maxLife);
+                
+                ctx.save();
+                ctx.globalAlpha = alpha;
+                
+                // Flackernde Flamme
+                const flicker = Math.sin(fire.timer * 0.3) * 2;
+                ctx.fillStyle = '#FF4500';
+                ctx.fillRect(fireX, fireY + flicker, 16, 16);
+                ctx.fillStyle = '#FFA500';
+                ctx.fillRect(fireX + 4, fireY + 4 + flicker, 8, 8);
+                ctx.fillStyle = '#FFFF00';
+                ctx.fillRect(fireX + 6, fireY + 6 + flicker, 4, 4);
+                
+                ctx.restore();
+            });
+        }
 
         // Zeichne Elemental
         ctx.save();
+        
+        if (this.isDying) {
+            ctx.globalAlpha = this.deathOpacity;
+            const centerX = screenX + this.width / 2;
+            const centerY = screenY + this.height / 2;
+            ctx.translate(centerX, centerY);
+            ctx.rotate(this.deathRotation);
+            
+            // Zeichne rotierendes Fire Elemental
+            ctx.fillStyle = '#FF4500';
+            ctx.fillRect(-16, -16, 32, 32);
+            ctx.fillStyle = '#FFA500';
+            ctx.fillRect(-10, -10, 20, 20);
+            ctx.fillStyle = '#FFFF00';
+            ctx.fillRect(-6, -6, 12, 12);
+            
+            // X-Augen
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(-8, -4);
+            ctx.lineTo(-2, 2);
+            ctx.moveTo(-2, -4);
+            ctx.lineTo(-8, 2);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(2, -4);
+            ctx.lineTo(8, 2);
+            ctx.moveTo(8, -4);
+            ctx.lineTo(2, 2);
+            ctx.stroke();
+            
+            ctx.restore();
+            return;
+        }
         
         const flicker = Math.sin(Date.now() * 0.01 + this.flickerOffset) * 3;
         
@@ -1098,9 +1484,38 @@ export class SpinningEnemy extends Enemy {
         this.minRadius = 20;
         this.maxRadius = 80;
         this.rotationAngle = 0;
+        
+        // Death Animation
+        this.isDying = false;
+        this.deathTimer = 0;
+        this.deathDuration = 500;
+        this.deathRotation = 0;
+        this.deathOpacity = 1;
+        this.deathVelocityY = -5;
+        this.deathY = y;
+    }
+
+    die() {
+        if (!this.isDying) {
+            this.isDying = true;
+            this.deathTimer = 0;
+            this.deathY = this.y;
+        }
     }
 
     update(level) {
+        if (this.isDying) {
+            this.deathTimer += 16;
+            const progress = Math.min(this.deathTimer / this.deathDuration, 1);
+            this.deathRotation = progress * Math.PI * 6; // Schnelleres Drehen
+            this.deathOpacity = 1 - progress;
+            this.deathVelocityY += 0.3;
+            this.deathY += this.deathVelocityY;
+            if (progress >= 1) {
+                this.active = false;
+            }
+            return;
+        }
         if (!this.active) return;
 
         // Spiral-Bewegung
@@ -1121,14 +1536,18 @@ export class SpinningEnemy extends Enemy {
     }
 
     draw(ctx, camera) {
-        if (!this.active) return;
+        if (!this.active && !this.isDying) return;
 
         const screenX = this.x - camera.x;
-        const screenY = this.y - camera.y;
+        const screenY = (this.isDying ? this.deathY : this.y) - camera.y;
 
         ctx.save();
         ctx.translate(screenX + this.width / 2, screenY + this.height / 2);
-        ctx.rotate(this.rotationAngle);
+        ctx.rotate(this.isDying ? this.deathRotation : this.rotationAngle);
+        
+        if (this.isDying) {
+            ctx.globalAlpha = this.deathOpacity;
+        }
         
         // Sandsturm-Wirbel
         ctx.fillStyle = '#DEB887';
@@ -1157,9 +1576,38 @@ export class SlidingEnemy extends Enemy {
         this.iceSpeed = 6; // Sehr schnell auf Eis
         this.direction = 1;
         this.isOnIce = false;
+        
+        // Death Animation
+        this.isDying = false;
+        this.deathTimer = 0;
+        this.deathDuration = 500;
+        this.deathRotation = 0;
+        this.deathOpacity = 1;
+        this.deathVelocityY = -5;
+        this.deathY = y;
+    }
+
+    die() {
+        if (!this.isDying) {
+            this.isDying = true;
+            this.deathTimer = 0;
+            this.deathY = this.y;
+        }
     }
 
     update(level) {
+        if (this.isDying) {
+            this.deathTimer += 16;
+            const progress = Math.min(this.deathTimer / this.deathDuration, 1);
+            this.deathRotation = progress * Math.PI * 4;
+            this.deathOpacity = 1 - progress;
+            this.deathVelocityY += 0.3;
+            this.deathY += this.deathVelocityY;
+            if (progress >= 1) {
+                this.active = false;
+            }
+            return;
+        }
         if (!this.active) return;
 
         // Prüfe ob auf Eis
@@ -1205,12 +1653,43 @@ export class SlidingEnemy extends Enemy {
     }
 
     draw(ctx, camera) {
-        if (!this.active) return;
+        if (!this.active && !this.isDying) return;
 
         const screenX = this.x - camera.x;
-        const screenY = this.y - camera.y;
+        const screenY = (this.isDying ? this.deathY : this.y) - camera.y;
 
         ctx.save();
+        
+        if (this.isDying) {
+            ctx.globalAlpha = this.deathOpacity;
+            const centerX = screenX + this.width / 2;
+            const centerY = screenY + this.height / 2;
+            ctx.translate(centerX, centerY);
+            ctx.rotate(this.deathRotation);
+            
+            // Zeichne rotierenden Eis-Slider
+            ctx.fillStyle = '#B0E0E6';
+            ctx.fillRect(-16, -16, 32, 32);
+            
+            // X-Augen
+            ctx.strokeStyle = '#00FFFF';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(-8, -4);
+            ctx.lineTo(-2, 2);
+            ctx.moveTo(-2, -4);
+            ctx.lineTo(-8, 2);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(2, -4);
+            ctx.lineTo(8, 2);
+            ctx.moveTo(8, -4);
+            ctx.lineTo(2, 2);
+            ctx.stroke();
+            
+            ctx.restore();
+            return;
+        }
         
         // Eis-Kristall Farbe
         ctx.fillStyle = this.isOnIce ? '#00FFFF' : '#B0E0E6';
@@ -1248,9 +1727,39 @@ export class IcicleEnemy extends Enemy {
         this.icicles = [];
         this.shootTimer = 0;
         this.shootInterval = 180; // 3 Sekunden
+        
+        // Death Animation
+        this.isDying = false;
+        this.deathTimer = 0;
+        this.deathDuration = 500;
+        this.deathRotation = 0;
+        this.deathOpacity = 1;
+        this.deathVelocityY = -5;
+        this.deathY = y;
+    }
+
+    die() {
+        if (!this.isDying) {
+            this.isDying = true;
+            this.deathTimer = 0;
+            this.deathY = this.y;
+            this.icicles = []; // Entferne alle Projektile
+        }
     }
 
     update(level, player) {
+        if (this.isDying) {
+            this.deathTimer += 16;
+            const progress = Math.min(this.deathTimer / this.deathDuration, 1);
+            this.deathRotation = progress * Math.PI * 4;
+            this.deathOpacity = 1 - progress;
+            this.deathVelocityY += 0.3;
+            this.deathY += this.deathVelocityY;
+            if (progress >= 1) {
+                this.active = false;
+            }
+            return;
+        }
         if (!this.active) return;
 
         // Shoot Timer
@@ -1304,13 +1813,45 @@ export class IcicleEnemy extends Enemy {
     }
 
     draw(ctx, camera) {
-        if (!this.active) return;
+        if (!this.active && !this.isDying) return;
 
         const screenX = this.x - camera.x;
-        const screenY = this.y - camera.y;
+        const screenY = (this.isDying ? this.deathY : this.y) - camera.y;
 
         // Zeichne Enemy
         ctx.save();
+        
+        if (this.isDying) {
+            ctx.globalAlpha = this.deathOpacity;
+            const centerX = screenX + this.width / 2;
+            const centerY = screenY + this.height / 2;
+            ctx.translate(centerX, centerY);
+            ctx.rotate(this.deathRotation);
+            
+            // Zeichne rotierenden Icicle Enemy
+            ctx.fillStyle = '#87CEEB';
+            ctx.fillRect(-16, -16, 32, 32);
+            
+            // X-Augen
+            ctx.strokeStyle = '#00FFFF';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(-8, -4);
+            ctx.lineTo(-2, 2);
+            ctx.moveTo(-2, -4);
+            ctx.lineTo(-8, 2);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(2, -4);
+            ctx.lineTo(8, 2);
+            ctx.moveTo(8, -4);
+            ctx.lineTo(2, 2);
+            ctx.stroke();
+            
+            ctx.restore();
+            return;
+        }
+        
         ctx.fillStyle = '#87CEEB';
         ctx.fillRect(screenX, screenY, this.width, this.height);
         
@@ -1328,28 +1869,30 @@ export class IcicleEnemy extends Enemy {
         
         ctx.restore();
 
-        // Zeichne Icicles
-        this.icicles.forEach(icicle => {
-            if (!icicle.active) return;
-            
-            const iceX = icicle.x - camera.x;
-            const iceY = icicle.y - camera.y;
-            
-            ctx.save();
-            ctx.fillStyle = '#00FFFF';
-            ctx.beginPath();
-            ctx.moveTo(iceX, iceY);
-            ctx.lineTo(iceX + 4, iceY + 6);
-            ctx.lineTo(iceX, iceY + 12);
-            ctx.lineTo(iceX - 4, iceY + 6);
-            ctx.closePath();
-            ctx.fill();
-            
-            // Glitzer
-            ctx.fillStyle = '#FFFFFF';
-            ctx.fillRect(iceX - 1, iceY + 4, 2, 2);
-            ctx.restore();
-        });
+        // Zeichne Icicles (nur wenn nicht sterbend)
+        if (!this.isDying) {
+            this.icicles.forEach(icicle => {
+                if (!icicle.active) return;
+                
+                const iceX = icicle.x - camera.x;
+                const iceY = icicle.y - camera.y;
+                
+                ctx.save();
+                ctx.fillStyle = '#00FFFF';
+                ctx.beginPath();
+                ctx.moveTo(iceX, iceY);
+                ctx.lineTo(iceX + 4, iceY + 6);
+                ctx.lineTo(iceX, iceY + 12);
+                ctx.lineTo(iceX - 4, iceY + 6);
+                ctx.closePath();
+                ctx.fill();
+                
+                // Glitzer
+                ctx.fillStyle = '#FFFFFF';
+                ctx.fillRect(iceX - 1, iceY + 4, 2, 2);
+                ctx.restore();
+            });
+        }
     }
 }
 
@@ -1365,9 +1908,38 @@ export class CloudEnemy extends Enemy {
         this.teleportInterval = 180; // 3 Sekunden
         this.isTeleporting = false;
         this.teleportProgress = 0;
+        
+        // Death Animation
+        this.isDying = false;
+        this.deathTimer = 0;
+        this.deathDuration = 500;
+        this.deathRotation = 0;
+        this.deathOpacity = 1;
+        this.deathVelocityY = -5;
+        this.deathY = y;
+    }
+
+    die() {
+        if (!this.isDying) {
+            this.isDying = true;
+            this.deathTimer = 0;
+            this.deathY = this.y;
+        }
     }
 
     update(level) {
+        if (this.isDying) {
+            this.deathTimer += 16;
+            const progress = Math.min(this.deathTimer / this.deathDuration, 1);
+            this.deathRotation = progress * Math.PI * 4;
+            this.deathOpacity = 1 - progress;
+            this.deathVelocityY += 0.3;
+            this.deathY += this.deathVelocityY;
+            if (progress >= 1) {
+                this.active = false;
+            }
+            return;
+        }
         if (!this.active || this.cloudPlatforms.length === 0) return;
 
         this.teleportTimer++;
@@ -1395,15 +1967,50 @@ export class CloudEnemy extends Enemy {
     }
 
     draw(ctx, camera) {
-        if (!this.active) return;
+        if (!this.active && !this.isDying) return;
 
         const screenX = this.x - camera.x;
-        const screenY = this.y - camera.y;
+        const screenY = (this.isDying ? this.deathY : this.y) - camera.y;
 
         ctx.save();
         
-        // Fade-Effekt beim Teleportieren
+        if (this.isDying) {
+            ctx.globalAlpha = this.deathOpacity;
+            const centerX = screenX + this.width / 2;
+            const centerY = screenY + this.height / 2;
+            ctx.translate(centerX, centerY);
+            ctx.rotate(this.deathRotation);
+            
+            // Zeichne rotierende Wolke
+            ctx.fillStyle = '#F0F8FF';
+            ctx.beginPath();
+            ctx.arc(-6, 0, 10, 0, Math.PI * 2);
+            ctx.arc(6, 0, 10, 0, Math.PI * 2);
+            ctx.arc(0, -8, 12, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // X-Augen
+            ctx.strokeStyle = '#4169E1';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(-8, -4);
+            ctx.lineTo(-2, 2);
+            ctx.moveTo(-2, -4);
+            ctx.lineTo(-8, 2);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(2, -4);
+            ctx.lineTo(8, 2);
+            ctx.moveTo(8, -4);
+            ctx.lineTo(2, 2);
+            ctx.stroke();
+            
+            ctx.restore();
+            return;
+        }
+        
         if (this.isTeleporting) {
+            // Fade-Effekt beim Teleportieren
             const fadeAlpha = this.teleportProgress < 0.5 
                 ? 1 - (this.teleportProgress * 2)
                 : (this.teleportProgress - 0.5) * 2;
@@ -1446,9 +2053,41 @@ export class LightningEnemy extends Enemy {
         this.lightningDuration = 15; // 0.25 Sekunden Blitz
         this.lightningTimer2 = 0;
         this.lightningX = 0;
+        
+        // Death Animation
+        this.isDying = false;
+        this.deathTimer = 0;
+        this.deathDuration = 500;
+        this.deathRotation = 0;
+        this.deathOpacity = 1;
+        this.deathVelocityY = -5;
+        this.deathY = y;
+    }
+
+    die() {
+        if (!this.isDying) {
+            this.isDying = true;
+            this.deathTimer = 0;
+            this.deathY = this.y;
+            // Blitz-Effekte stoppen
+            this.isCharging = false;
+            this.lightningActive = false;
+        }
     }
 
     update(level) {
+        if (this.isDying) {
+            this.deathTimer += 16;
+            const progress = Math.min(this.deathTimer / this.deathDuration, 1);
+            this.deathRotation = progress * Math.PI * 4;
+            this.deathOpacity = 1 - progress;
+            this.deathVelocityY += 0.3;
+            this.deathY += this.deathVelocityY;
+            if (progress >= 1) {
+                this.active = false;
+            }
+            return;
+        }
         if (!this.active) return;
 
         this.lightningTimer++;
@@ -1492,13 +2131,45 @@ export class LightningEnemy extends Enemy {
     }
 
     draw(ctx, camera) {
-        if (!this.active) return;
+        if (!this.active && !this.isDying) return;
 
         const screenX = this.x - camera.x;
-        const screenY = this.y - camera.y;
+        const screenY = (this.isDying ? this.deathY : this.y) - camera.y;
 
         // Zeichne Enemy
         ctx.save();
+        
+        if (this.isDying) {
+            ctx.globalAlpha = this.deathOpacity;
+            const centerX = screenX + this.width / 2;
+            const centerY = screenY + this.height / 2;
+            ctx.translate(centerX, centerY);
+            ctx.rotate(this.deathRotation);
+            
+            // Zeichne rotierenden Lightning Enemy
+            ctx.fillStyle = '#4169E1';
+            ctx.fillRect(-16, -16, 32, 32);
+            
+            // X-Augen
+            ctx.strokeStyle = '#FFFF00';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(-8, -4);
+            ctx.lineTo(-2, 2);
+            ctx.moveTo(-2, -4);
+            ctx.lineTo(-8, 2);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(2, -4);
+            ctx.lineTo(8, 2);
+            ctx.moveTo(8, -4);
+            ctx.lineTo(2, 2);
+            ctx.stroke();
+            
+            ctx.restore();
+            return;
+        }
+        
         ctx.fillStyle = this.isCharging ? '#FFD700' : '#4169E1';
         ctx.fillRect(screenX, screenY, this.width, this.height);
         

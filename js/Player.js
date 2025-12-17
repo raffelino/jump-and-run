@@ -1,4 +1,5 @@
 import { Logger } from './Logger.js';
+import { Apple } from './Apple.js';
 
 /**
  * Player Klasse - Spieler mit Physik, Kollision und Leben
@@ -55,6 +56,14 @@ export class Player {
         // Debug
         this.showCollisionBox = false; // Schalter für Collision-Box Visualisierung
         this.debugFrameCounter = 0; // Für periodisches Debug-Output
+        
+        // Apfel-Wurf
+        this.apples = []; // Aktive Äpfel
+        this.maxApples = 3; // Max gleichzeitig in der Luft
+        this.appleCooldown = 0; // Cooldown zwischen Würfen
+        this.appleCooldownTime = 300; // 300ms zwischen Würfen
+        this.throwKeyPressed = false; // Verhindert Dauerfeuer
+        
         // Smooth crouch/stand transition
         this.crouchTransition = {
             active: false,
@@ -268,6 +277,23 @@ export class Player {
         if (this.y > level.height * level.tileSize + 100) {
             this.die();
         }
+
+        // Apfel werfen (E-Taste oder F-Taste)
+        this.appleCooldown = Math.max(0, this.appleCooldown - deltaTime);
+        const throwPressed = inputHandler.isPressed('e') || inputHandler.isPressed('f');
+        
+        if (throwPressed && !this.throwKeyPressed && this.appleCooldown <= 0 && !this.isCrouching) {
+            if (this.apples.filter(a => a.active).length < this.maxApples) {
+                this.throwApple();
+                this.appleCooldown = this.appleCooldownTime;
+            }
+        }
+        this.throwKeyPressed = throwPressed;
+
+        // Update Äpfel
+        this.apples.forEach(apple => apple.update(level));
+        // Entferne inaktive Äpfel
+        this.apples = this.apples.filter(apple => apple.active);
 
         // Update Animation
         this.updateAnimation(deltaTime);
@@ -978,6 +1004,48 @@ export class Player {
             this.deathAnimationTimer = 0;
         }
     }
+
+    /**
+     * Wirft einen Apfel in Blickrichtung
+     */
+    throwApple() {
+        const direction = this.facingRight ? 1 : -1;
+        // Apfel startet auf Brusthöhe des Spielers
+        const appleX = this.facingRight ? this.x + this.width : this.x - 16;
+        const appleY = this.y + 30;
+        
+        const apple = new Apple(appleX, appleY, direction);
+        this.apples.push(apple);
+    }
+
+    /**
+     * Prüft Kollisionen der Äpfel mit Gegnern
+     * @returns Array von getroffenen Gegnern
+     */
+    checkAppleCollisions(enemies) {
+        const hitEnemies = [];
+        
+        for (const apple of this.apples) {
+            if (!apple.active) continue;
+            
+            for (const enemy of enemies) {
+                if (apple.checkEnemyCollision(enemy)) {
+                    apple.active = false; // Apfel verschwindet
+                    hitEnemies.push(enemy);
+                    break; // Ein Apfel kann nur einen Gegner treffen
+                }
+            }
+        }
+        
+        return hitEnemies;
+    }
+
+    /**
+     * Zeichnet alle aktiven Äpfel
+     */
+    drawApples(ctx, camera) {
+        this.apples.forEach(apple => apple.draw(ctx, camera));
+    }
     
     /**
      * Zeichnet die geduckte Spielfigur (komprimiert auf 1 Tile Höhe)
@@ -1089,6 +1157,8 @@ export class Player {
         this.dropThroughPlatform = false;
         this.dropThroughY = 0;
         this.isOnPlatform = false;
+        this.apples = []; // Alle Äpfel entfernen
+        this.appleCooldown = 0;
     }
 
     checkIfOnIce(level) {

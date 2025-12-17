@@ -12,7 +12,7 @@ import { LevelEditor } from './LevelEditor.js';
 // =============================================
 // VERSION - Hier anpassen zum Testen von Änderungen
 // =============================================
-const GAME_VERSION = '1.0.2';
+const GAME_VERSION = '1.0.3';
 // =============================================
 
 /**
@@ -414,6 +414,16 @@ class Game {
             // Spieler ist auf Gegner gesprungen = kleiner Sprung
             this.player.velocityY = -8; // Leichter Sprung nach oben
         }
+
+        // Apfel-Kollisionen mit Gegnern prüfen
+        const hitEnemies = this.player.checkAppleCollisions(this.currentLevel.enemies);
+        for (const enemy of hitEnemies) {
+            if (enemy.die) {
+                enemy.die();
+            } else {
+                enemy.active = false;
+            }
+        }
         
         // Ziel erreicht
         if (this.currentLevel.checkGoalReached(this.player) && !this.levelComplete) {
@@ -458,6 +468,8 @@ class Game {
             // Zeichne Spieler
             if (this.player) {
                 this.player.draw(this.ctx, this.camera);
+                // Zeichne Äpfel
+                this.player.drawApples(this.ctx, this.camera);
             }
         }
         
