@@ -18,10 +18,10 @@ export class Player {
         // Physik
         this.velocityX = 0;
         this.velocityY = 0;
-        this.speed = 4;
+        this.speed = 6;
         this.crouchSpeed = 2; // Langsamere Geschwindigkeit beim Ducken
-        this.jumpPower = 12;
-        this.gravity = 0.35;
+        this.jumpPower = 18;
+        this.gravity = 0.8;
         this.maxFallSpeed = 12;
         
         // Status
@@ -53,6 +53,17 @@ export class Player {
         // Debug
         this.showCollisionBox = false; // Schalter für Collision-Box Visualisierung
         this.debugFrameCounter = 0; // Für periodisches Debug-Output
+        // Smooth crouch/stand transition
+        this.crouchTransition = {
+            active: false,
+            duration: 120, // ms
+            elapsed: 0,
+            startY: 0,
+            targetY: 0,
+            startHeight: this.normalHeight,
+            targetHeight: this.crouchHeight,
+            onComplete: null
+        };
     }
 
     update(inputHandler, level, deltaTime = 16) {
@@ -62,9 +73,9 @@ export class Player {
             return;
         }
         
-        // Frame-rate Normalisierung: Bei 60 FPS ist deltaTime ~10.67ms
-        // Alle Bewegungen mit diesem Faktor multiplizieren für konstante Geschwindigkeit
-        const timeScale = deltaTime / 10.67;
+    // Frame-rate Normalisierung: Basis auf 60 FPS (16.67ms)
+    // Alle Bewegungen mit diesem Faktor multiplizieren für konstante Geschwindigkeit
+    const timeScale = deltaTime / 16.67;
         
         // DEBUG: Frame-Counter für reduzierte Ausgabe
         this.debugFrameCounter = (this.debugFrameCounter || 0) + 1;
@@ -81,36 +92,73 @@ export class Player {
         const wantsToCrouch = inputHandler.isPressed('ArrowDown') || inputHandler.isPressed('s');
         const wantsToStandUp = inputHandler.isPressed('ArrowUp') || inputHandler.isPressed('w');
         
-        if (shouldLog && wantsToCrouch) {
-            console.log(`Crouch input detected: wantsToCrouch=${wantsToCrouch}, isOnGround=${this.isOnGround}`);
-        }
+        
+        // ----- Crouch / Stand handling with smooth transition -----
+        // Fußposition muss konstant bleiben: footY = y + height
+        // Beim Ducken: height wird kleiner, y muss größer werden damit footY gleich bleibt
+        // Beim Aufstehen: height wird größer, y muss kleiner werden damit footY gleich bleibt
         
         if (wantsToStandUp && this.isCrouching) {
-            // Nach oben gedrückt - versuche aufzustehen
             if (this.canStandUp(level, this.y)) {
-                this.isCrouching = false;
-                this.height = this.normalHeight;
-                // KEINE Y-Position Änderung
+                // Start stand transition
+                if (!this.crouchTransition.active) {
+                    const deltaH = this.normalHeight - this.crouchHeight;
+                    // Fußposition berechnen (muss konstant bleiben)
+                    const footY = this.y + this.height;
+                    this.crouchTransition.active = true;
+                    this.crouchTransition.elapsed = 0;
+                    this.crouchTransition.footY = footY; // Speichere Fußposition
+                    this.crouchTransition.startHeight = this.crouchHeight;
+                    this.crouchTransition.targetHeight = this.normalHeight;
+                    this.crouchTransition.onComplete = () => {
+                        this.isCrouching = false;
+                        this.height = this.normalHeight;
+                        this.y = footY - this.normalHeight;
+                    };
+                }
             }
         } else if (wantsToCrouch) {
-            // Ducken aktivieren - solange Taste gedrückt ist
             if (!this.isCrouching && this.isOnGround) {
-                // Nur ducken wenn auf dem Boden
-                this.isCrouching = true;
-                this.height = this.crouchHeight;
-                // KEINE Y-Position Änderung - die Figur wird von oben komprimiert
-            }
-            // Wenn bereits geduckt, bleibe geduckt (auch in der Luft)
-        } else {
-            // Taste losgelassen - aufstehen, aber nur wenn genug Platz
-            if (this.isCrouching) {
-                // Prüfe ob Platz zum Aufstehen ist (aktuelle Position, volle Höhe)
-                if (this.canStandUp(level, this.y)) {
-                    this.isCrouching = false;
-                    this.height = this.normalHeight;
-                    // KEINE Y-Position Änderung
+                // Start crouch transition
+                if (!this.crouchTransition.active) {
+                    console.log(`Crouch input detected: wantsToCrouch=${wantsToCrouch}, isOnGround=${this.isOnGround}`);
+                    // Fußposition berechnen (muss konstant bleiben)
+                    const footY = this.y + this.height;
+                    this.crouchTransition.active = true;
+                    this.crouchTransition.elapsed = 0;
+                    this.crouchTransition.footY = footY; // Speichere Fußposition
+                    this.crouchTransition.startHeight = this.normalHeight;
+                    this.crouchTransition.targetHeight = this.crouchHeight;
+                    this.crouchTransition.onComplete = () => {
+                        this.isCrouching = true;
+                        this.height = this.crouchHeight;
+                        this.y = footY - this.crouchHeight;
+                    };
                 }
-                // Wenn nicht genug Platz, bleibe geduckt bis Platz vorhanden ist
+            }
+        }
+        
+        // ----- Update crouch transition -----
+        if (this.crouchTransition.active) {
+            this.crouchTransition.elapsed += deltaTime;
+            const progress = Math.min(this.crouchTransition.elapsed / this.crouchTransition.duration, 1);
+            
+            // Smooth easing (ease-out)
+            const easedProgress = 1 - Math.pow(1 - progress, 2);
+            
+            // Interpolate height, calculate Y from constant foot position
+            this.height = this.crouchTransition.startHeight + (this.crouchTransition.targetHeight - this.crouchTransition.startHeight) * easedProgress;
+            // Y wird aus footY berechnet: y = footY - height
+            this.y = this.crouchTransition.footY - this.height;
+            
+            // Check if transition is complete
+            if (progress >= 1) {
+                this.crouchTransition.active = false;
+                this.height = this.crouchTransition.targetHeight;
+                this.y = this.crouchTransition.footY - this.height;
+                if (this.crouchTransition.onComplete) {
+                    this.crouchTransition.onComplete();
+                }
             }
         }
         
@@ -174,15 +222,15 @@ export class Player {
             }
         }
 
-        // Schwerkraft anwenden - NUR wenn nicht auf dem Boden (mit timeScale)
+        // Schwerkraft anwenden - NUR wenn nicht auf dem Boden und nicht in Crouch-Transition (mit timeScale)
         // isOnGround wird in handleVerticalCollisions gesetzt
-        if (!this.isOnGround) {
+        if (!this.isOnGround && !this.crouchTransition.active) {
             this.velocityY += this.gravity * timeScale;
             if (this.velocityY > this.maxFallSpeed) {
                 this.velocityY = this.maxFallSpeed;
             }
-        } else {
-            // Wenn auf dem Boden, velocity auf 0 halten
+        } else if (this.isOnGround || this.crouchTransition.active) {
+            // Wenn auf dem Boden oder in Crouch-Transition, velocity auf 0 halten
             this.velocityY = 0;
         }
 
@@ -191,9 +239,14 @@ export class Player {
         this.handleHorizontalCollisions(level);
 
         // Vertikale Bewegung und Kollision (mit timeScale)
+        // NICHT während Crouch-Transition - da wird Y separat gesetzt
         const yBefore = this.y;
-        this.y += this.velocityY * timeScale;
-        this.handleVerticalCollisions(level);
+        let movementDelta = 0;
+        if (!this.crouchTransition.active) {
+            movementDelta = this.velocityY * timeScale;
+            this.y += movementDelta;
+            this.handleVerticalCollisions(level, movementDelta);
+        }
         
         if (shouldLog) {
             console.log(`Vertical movement: yBefore=${yBefore.toFixed(2)}, yAfter=${this.y.toFixed(2)}, delta=${(this.y - yBefore).toFixed(2)}`);
@@ -210,7 +263,7 @@ export class Player {
     }
 
     updateAnimation(deltaTime) {
-        console.log('updateAnimation called, deltaTime:', deltaTime);
+        //console.log('updateAnimation called, deltaTime:', deltaTime);
         const sprites = this.assetManager.getSprite('player');
         
         // Bestimme Animations-State
@@ -226,7 +279,7 @@ export class Player {
             this.animationState = 'idle';
         }
         
-        console.log('Current animationState:', this.animationState, 'isOnGround:', this.isOnGround);
+        //console.log('Current animationState:', this.animationState, 'isOnGround:', this.isOnGround);
         
         // Debug Output
         if (previousState !== this.animationState) {
@@ -243,7 +296,7 @@ export class Player {
         if (this.animationState === 'idle') {
             this.debugFrameCounter++;
             // Nur alle 60 Frames (ca. 1x pro Sekunde) ausgeben
-            if (this.debugFrameCounter >= 60) {
+            if (this.debugFrameCounter >= 120) {
                 console.log('=== IDLE DEBUG ===', {
                     state: this.animationState,
                     isOnGround: this.isOnGround,
@@ -347,16 +400,16 @@ export class Player {
         }
     }
 
-    handleVerticalCollisions(level) {
+    handleVerticalCollisions(level, movementDelta = 0) {
         const tileSize = level.tileSize;
         const leftTile = Math.floor(this.x / tileSize);
         const rightTile = Math.floor((this.x + this.width - 1) / tileSize);
         const topTile = Math.floor(this.y / tileSize);
         const bottomTile = Math.floor((this.y + this.height - 1) / tileSize);
 
-        this.logger.log(`--- Vertical Collision Check ---`);
-        this.logger.log(`Player Y: ${this.y.toFixed(2)}, VelocityY: ${this.velocityY.toFixed(2)}`);
-        this.logger.log(`Checking tiles - Top: ${topTile}, Bottom: ${bottomTile}, Left: ${leftTile}, Right: ${rightTile}`);
+        //this.logger.log(`--- Vertical Collision Check ---`);
+        //this.logger.log(`Player Y: ${this.y.toFixed(2)}, VelocityY: ${this.velocityY.toFixed(2)}`);
+        //this.logger.log(`Checking tiles - Top: ${topTile}, Bottom: ${bottomTile}, Left: ${leftTile}, Right: ${rightTile}`);
 
         let collisionFound = false;
         let wasOnGround = false;
@@ -379,12 +432,13 @@ export class Player {
                     if (tile.platformOnly) {
                         this.logger.log(`  -> Platform detected! velocityY: ${this.velocityY}`);
                         // Nur kollidieren wenn Spieler von oben kommt
-                        if (this.velocityY > 0) {
+                        // Verwende movementDelta (tatsächliche Verschiebung) statt raw velocity
+                        if (movementDelta > 0) {
                             const playerBottom = this.y + this.height;
                             const tileTop = row * tileSize;
                             this.logger.log(`    playerBottom: ${playerBottom}, tileTop: ${tileTop}, diff: ${playerBottom - tileTop}`);
                             // Nur kollidieren wenn Spieler-Fuß über der Plattform-Oberseite ist
-                            if (playerBottom <= tileTop + this.velocityY) {
+                            if (playerBottom <= tileTop + movementDelta) {
                                 this.logger.log(`  -> Platform collision from TOP`);
                                 this.y = row * tileSize - this.height;
                                 this.velocityY = 0;
@@ -397,14 +451,14 @@ export class Player {
                         // Von unten/seitlich: keine Kollision
                     } else {
                         // Normale Tiles: Kollision von allen Seiten
-                        if (this.velocityY > 0) {
+                        if (movementDelta > 0) {
                             // Nach unten gefallen
                             this.logger.log(`  -> Collision from TOP (falling down)`);
                             this.y = row * tileSize - this.height;
                             this.velocityY = 0;
                             wasOnGround = true;
                             collisionFound = true;
-                        } else if (this.velocityY < 0) {
+                        } else if (movementDelta < 0) {
                             // Nach oben gesprungen
                             this.logger.log(`  -> Collision from BOTTOM (jumping up)`);
                             this.y = (row + 1) * tileSize;
@@ -427,23 +481,25 @@ export class Player {
                     const playerBottom = this.y + this.height;
                     const tileTop = checkBottomRow * tileSize;
                     const distance = Math.abs(playerBottom - tileTop);
-                    
-                    this.logger.log(`  Checking ground below at (${col}, ${checkBottomRow}), distance: ${distance.toFixed(2)}`);
-                    
-                    // Wenn der Spieler innerhalb 1 Pixel vom Tile-Top ist, steht er drauf
-                    if (distance <= 1) {
+                    //this.logger.log(`  Checking ground below at (${col}, ${checkBottomRow}), distance: ${distance.toFixed(2)}, movementDelta: ${movementDelta.toFixed(3)}`);
+                    // Toleranz basierend auf movementDelta, mindestens 1px
+                    const tolerance = Math.max(1, Math.abs(movementDelta) + 0.5);
+                    // Nur wenn sich der Spieler nicht nach oben bewegt (movementDelta >= 0)
+                    // sonst würde ein kleiner negativer movementDelta (Aufwärtsbewegung) zu
+                    // einem fälschlichen Snap auf den Boden führen und Sprünge neutralisieren.
+                    if (movementDelta >= 0 && distance <= tolerance) {
                         wasOnGround = true;
                         // WICHTIG: Korrigiere Position auf exakt den Boden
                         this.y = tileTop - this.height;
                         this.velocityY = 0;
-                        this.logger.log(`  -> Standing on ground! Position corrected to y=${this.y}`);
+                        //this.logger.log(`  -> Standing on ground! Position corrected to y=${this.y}`);
                     }
                 }
             }
         }
 
         this.isOnGround = wasOnGround;
-        this.logger.log(`isOnGround after check: ${this.isOnGround}, Collision found: ${collisionFound}`);
+        //this.logger.log(`isOnGround after check: ${this.isOnGround}, Collision found: ${collisionFound}`);
     }
 
     handleCollisions(level) {
@@ -617,9 +673,22 @@ export class Player {
         const offsetX = -16; // Verschiebe Figur nach links um sie zu zentrieren
         const offsetY = 0; // Keine vertikale Verschiebung nötig
         
-        // Wenn geduckt, zeichne komprimierte Version
-        if (this.isCrouching) {
-            this.drawCrouching(ctx, screenX, screenY, scale, offsetX, offsetY);
+        // Wenn geduckt ODER in Crouch-Transition, zeichne komprimierte/interpolierte Version
+        // Berechne Transitions-Fortschritt für Animation
+        if (this.isCrouching || this.crouchTransition.active) {
+            // Berechne wie weit die Transition ist (0 = stehend, 1 = geduckt)
+            let transitionProgress = this.isCrouching ? 1 : 0;
+            if (this.crouchTransition.active) {
+                const progress = Math.min(this.crouchTransition.elapsed / this.crouchTransition.duration, 1);
+                const easedProgress = 1 - Math.pow(1 - progress, 2);
+                // Wenn wir zum Ducken gehen: 0 -> 1, wenn aufstehen: 1 -> 0
+                if (this.crouchTransition.targetHeight === this.crouchHeight) {
+                    transitionProgress = easedProgress;
+                } else {
+                    transitionProgress = 1 - easedProgress;
+                }
+            }
+            this.drawCrouching(ctx, screenX, screenY, scale, offsetX, offsetY, transitionProgress);
             // ctx.restore() wird jetzt in drawCrouching() aufgerufen
             return;
         }
@@ -866,10 +935,14 @@ export class Player {
     
     /**
      * Zeichnet die geduckte Spielfigur (komprimiert auf 1 Tile Höhe)
+     * @param transitionProgress 0 = stehend, 1 = voll geduckt
      */
-    drawCrouching(ctx, screenX, screenY, scale, offsetX, offsetY) {
-        // Komprimierte Version: nur 1 Tile hoch (16px * scale)
-        const crouchScale = 0.5; // Halb so groß
+    drawCrouching(ctx, screenX, screenY, scale, offsetX, offsetY, transitionProgress = 1) {
+        // Interpoliere zwischen stehend (1.0) und geduckt (0.5)
+        const crouchScale = 1.0 - (0.5 * transitionProgress); // 1.0 -> 0.5
+        
+        // KEIN verticalOffset mehr nötig - this.y wird bereits von der Transition korrekt gesetzt
+        // Die Zeichnung muss nur innerhalb der aktuellen Collision-Box (this.height) passen
         
         // Flip wenn nach links
         if (!this.facingRight) {
@@ -894,9 +967,9 @@ export class Player {
         ctx.fill();
         
         // Zopf (horizontal nach hinten)
-        ctx.fillRect(20 * scale, 6 * scale * crouchScale, 6 * scale, 2 * scale * crouchScale);
+        ctx.fillRect(20 * scale, 6 * scale * crouchScale, 6 * scale * crouchScale, 2 * scale * crouchScale);
         ctx.beginPath();
-        ctx.arc(26 * scale, 7 * scale * crouchScale, 1.5 * scale * crouchScale, 0, Math.PI * 2);
+        ctx.arc(26 * scale * crouchScale + 10 * scale * (1 - crouchScale), 7 * scale * crouchScale, 1.5 * scale * crouchScale, 0, Math.PI * 2);
         ctx.fill();
         
         // Körper/Kleid (komprimiert)

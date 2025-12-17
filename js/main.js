@@ -9,6 +9,12 @@ import { Logger } from './Logger.js';
 import { SoundManager } from './SoundManager.js';
 import { LevelEditor } from './LevelEditor.js';
 
+// =============================================
+// VERSION - Hier anpassen zum Testen von Änderungen
+// =============================================
+const GAME_VERSION = '1.0.2';
+// =============================================
+
 /**
  * Haupt-Game-Klasse - Verwaltet den gesamten Spielablauf
  */
@@ -454,6 +460,14 @@ class Game {
                 this.player.draw(this.ctx, this.camera);
             }
         }
+        
+        // Versionsanzeige (unten rechts)
+        this.ctx.save();
+        this.ctx.font = '12px Arial';
+        this.ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+        this.ctx.textAlign = 'right';
+        this.ctx.fillText(`v${GAME_VERSION}`, this.canvas.width - 10, this.canvas.height - 10);
+        this.ctx.restore();
     }
 
     completeLevel() {
@@ -793,5 +807,55 @@ class Game {
 
 // Starte das Spiel wenn die Seite geladen ist
 window.addEventListener('load', () => {
-    new Game();
+    // Mache die Game-Instanz global zugänglich für Debugging
+    window.game = new Game();
+
+    // Kurzer Debug-Helfer: Gibt relevante Runtime-Informationen in die Konsole aus
+    window.dumpGameState = function() {
+        if (!window.game) {
+            console.warn('No game instance available');
+            return;
+        }
+        const g = window.game;
+        console.log('--- GAME STATE DUMP ---');
+        console.log('gameState:', g.gameState);
+        if (g.player) {
+            console.log('player:', {
+                x: g.player.x,
+                y: g.player.y,
+                velocityX: g.player.velocityX,
+                velocityY: g.player.velocityY,
+                isOnGround: g.player.isOnGround,
+                isCrouching: g.player.isCrouching,
+                debugMovement: g.player.debugMovement
+            });
+        } else {
+            console.log('player: <not created>');
+        }
+        console.log('input.keys (raw):', g.inputHandler && g.inputHandler.keys ? g.inputHandler.keys : '<no inputHandler>');
+        try {
+            console.log('input states:', {
+                left: g.inputHandler.isLeftPressed(),
+                right: g.inputHandler.isRightPressed(),
+                jump: g.inputHandler.isJumpPressed(),
+                pressedMap: g.inputHandler.keys
+            });
+        } catch (e) {
+            console.warn('Could not read inputHandler states', e);
+        }
+        console.log('currentLevel present:', !!g.currentLevel, g.currentLevel ? { width: g.currentLevel.width, height: g.currentLevel.height, worldName: g.currentLevel.worldName } : null);
+        console.log('camera:', { x: g.camera.x, y: g.camera.y });
+        console.log('------------------------');
+    };
+
+    // Helfer: Toggle player.debugMovement für weniger/more logs
+    window.togglePlayerDebug = function() {
+        if (!window.game || !window.game.player) {
+            console.warn('No player available to toggle debug flag');
+            return;
+        }
+        const p = window.game.player;
+        p.debugMovement = !p.debugMovement;
+        console.log('player.debugMovement =', p.debugMovement);
+    };
 });
