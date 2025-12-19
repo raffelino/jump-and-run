@@ -117,8 +117,17 @@ class Game {
         // Resize Handler
         const resizeCanvas = () => {
             const container = document.getElementById('game-container');
-            const containerWidth = container.clientWidth;
-            const containerHeight = container.clientHeight;
+            
+            // Nutze visualViewport für Safari Mobile (dynamische Toolbar)
+            const viewportWidth = window.visualViewport ? window.visualViewport.width : window.innerWidth;
+            const viewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+            
+            // Container-Größe auf Viewport setzen (für Safari)
+            container.style.width = `${viewportWidth}px`;
+            container.style.height = `${viewportHeight}px`;
+            
+            const containerWidth = viewportWidth;
+            const containerHeight = viewportHeight;
             
             // Behalte das Seitenverhältnis bei
             const aspectRatio = this.baseWidth / this.baseHeight;
@@ -145,8 +154,17 @@ class Game {
         resizeCanvas();
         window.addEventListener('resize', resizeCanvas);
         window.addEventListener('orientationchange', () => {
+            // Mehrfaches Resize für Safari (Toolbar-Animation)
             setTimeout(resizeCanvas, 100);
+            setTimeout(resizeCanvas, 300);
+            setTimeout(resizeCanvas, 500);
         });
+        
+        // Safari visualViewport Support
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', resizeCanvas);
+            window.visualViewport.addEventListener('scroll', resizeCanvas);
+        }
     }
 
     setupUI() {
